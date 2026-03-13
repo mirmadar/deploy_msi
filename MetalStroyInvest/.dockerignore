@@ -1,0 +1,17 @@
+node_modules
+dist
+.env
+.env.*
+.git
+.gitignore
+*.md
+coverage
+.nyc_output
+*.log
+npm-debug.log*
+.DS_Store
+test
+**/*.spec.ts
+**/*.test.ts
+.eslintrc*
+.prettierrc*

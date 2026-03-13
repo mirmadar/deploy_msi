@@ -1,0 +1,647 @@
+@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+@font-face {
+  font-family: 'Geologica';
+  src: url('/fonts/geologica/Geologica-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geologica';
+  src: url('/fonts/geologica/Geologica-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geologica';
+  src: url('/fonts/geologica/Geologica-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* =========================
+     COLORS
+     ========================= */
+
+  --color-green: #028497;
+  --color-blue: #1D497A;
+  --color-dark: #071421;
+  --color-light-green: #E6F3F5;
+  --color-light-blue: #E0ECFB;
+  --color-gray: #7D848A;
+  --color-light-gray: #F3F3F3;
+  --color-white: #ffffff;
+  --color-blue-background: #D2DBE4;
+  --gradient-primary: linear-gradient(90deg, #028497 0%, #204C79 100%);
+  /* --color-shadow: rgba(0, 0, 0, 0.1); */
+
+  /* =========================
+     FONT SIZES
+     ========================= */
+
+  --font-size-h1: 40px;
+  --font-size-h2: 32px;
+  --font-size-h3: 24px;
+  --font-size-h4: 20px;
+  --font-size-h5: 18px;
+  --font-size-p: 16px;
+  --font-size-p-small: 14px;
+
+  --border-radius: 8px;
+  --classic-margin: 60px;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+main {
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* =========================
+   TYPOGRAPHY
+   ========================= */
+
+.h1-bold{
+    font-size: var(--font-size-h1);
+    font-weight: 800;
+}
+
+.h1-regular{
+    font-size: var(--font-size-h1);
+    font-weight: 700;
+}
+
+.h2-bold{
+    font-size: var(--font-size-h2);
+    font-weight: 800;
+}
+
+.h3-bold{
+    font-size: var(--font-size-h3);
+    font-weight: 700;
+}
+
+.h4-regular{
+    font-size: var(--font-size-h4);
+    font-weight: 600;
+}
+
+.h5-regular{
+    font-size: var(--font-size-h5);
+    font-weight: 600;
+}
+
+.h5-light{
+    font-size: var(--font-size-h5);
+    font-weight: 400;
+}
+
+p{
+    font-size: var(--font-size-p);
+    font-weight: 400;
+    margin: 0px;
+}
+
+.p-small{
+    font-size: var(--font-size-p-small);
+    font-weight: 400;
+}
+
+@media (max-width: 640px) {
+    .h1-bold{
+        font-size: 32px;
+    }
+
+    .h1-regular{
+        font-size: 32px;
+    }
+
+    .h2-bold{
+        font-size: 22px;
+    }
+
+    .h3-bold{
+        font-size: 20px;
+    }
+
+    .h4-regular{
+        font-size: 18px;
+    }
+
+    .h5-regular{
+        font-size: 16px;
+    }
+}
+
+.standard-section{
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.bg-white {
+    background-color: var(--color-white);
+}
+
+.bg-light-gray {
+    background-color: var(--color-light-gray);
+}
+
+body {
+    font-family: 'Geologica', sans-serif;
+  color: #1f2937; /* тёмно-серый */
+  background-color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.standart{
+  padding: 20px 80px 0px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Скрыть полосы прокрутки, сохранив возможность скролла */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+footer{
+  margin-top: 140px;
+}
+
+/* =========================
+   LINKS
+   ========================= */
+
+.small {
+  font-size: 12px;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255);
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+/* =========================
+   MEDIA
+   ========================= */
+
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* =========================
+   FORMS
+   ========================= */
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* =========================
+   LISTS
+   ========================= */
+
+ul,
+ol {
+  padding: 0;
+  margin: 0;
+}
+
+/* =========================
+   HEADINGS
+   ========================= */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-weight: 700;
+}
+
+/* =========================
+   UTILS
+   ========================= */
+
+
+.hidden {
+  display: none !important;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Контейнер */
+.container {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+}
+
+/* Карточки */
+.card-shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+.category-card{
+  text-decoration: none;
+  background-color: var(--color-light-gray);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 16px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 172px;
+  cursor: pointer;
+  color: var(--color-dark);
+
+  transition:
+    transform 0.3s ease,
+    background-color 0.3s ease,
+    color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+.category-card:hover {
+  transform: translateY(-4px);
+  background-color: var(--color-light-green);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.service-card {
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.service-card:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px); /* опционально, выглядит очень приятно */
+}
+
+.article-card {
+  width: 376px;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-light-gray);
+  gap: 16px;
+  padding: 16px 16px 24px;
+  border-radius: 24px;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.article-card:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  background-color: var(--color-light-green);
+  transform: translateY(-2px); /* опционально, выглядит очень приятно */
+}
+
+.articles-slider-wrapper {
+  position: relative;
+}
+
+/* Убираем стрелочки у числовых инпутов (фильтр цены и др.) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.articles-slider {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-right: 60px; /* чтобы стрелка не перекрывала карточки */
+
+  /* скрываем скроллбар */
+  scrollbar-width: none;
+}
+
+.articles-slider::-webkit-scrollbar {
+  display: none;
+}
+
+.slider-arrow {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+
+  background: #e6f4ef;
+}
+
+/* Инпуты */
+.input {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  background-color: #ffffff;
+  color: #0f172a;
+  transition: all 0.2s;
+}
+
+.input:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: var(--primary);
+}
+
+.input::placeholder {
+  color: #94a3b8;
+}
+
+.upload-label {
+  background-color: var(--color-white);
+  transition: background-color 0.25s ease;
+}
+
+.upload-label:hover {
+  background-color: var(--color-light-green);
+}
+
+/* Кнопки */
+.btn-primary {
+  background-color: var(--primary);
+  color: #ffffff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Утилиты */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Оптимизация для sticky */
+.sticky-optimized {
+  position: sticky;
+  top: 100px;
+  align-self: flex-start;
+  will-change: transform;
+  contain: layout style paint;
+}
+
+/* Оптимизация скролла */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ===== Страница товара ===== */
+.product-layout {
+  display: grid;
+  grid-template-columns: auto 260px 1fr;
+  gap: 64px;
+  align-items: start;
+}
+
+.product-image {
+  width: 260px;
+  height: 260px;
+  background: var(--color-light-gray);
+  border-radius: 12px;
+  position: relative;
+}
+
+.product-specs {
+  min-width: 0;
+  max-width: 260px;
+}
+
+.product-info {
+  position: sticky;
+  top: 140px; /* прилипает при скролле */
+  align-self: start;
+}
+
+/* ===== Адаптация ===== */
+@media (max-width: 1024px) {
+  .product-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* две колонки для картинки и инфо */
+    gap: 24px;
+  }
+
+  .product-image {
+    width: 120px;
+    height: 120px;
+    order: 1;
+  }
+
+  .product-info {
+    position: static;
+    order: 2;
+    min-width: 200px;
+  }
+
+  .product-specs {
+    grid-column: 1 / -1; /* занимают всю ширину под верхними блоками */
+    order: 3;
+  }
+
+  .product-description {
+    grid-column: 1 / -1; /* описание тоже под ними */
+    order: 4;
+  }
+
+  .category-card{
+  padding: 8px 8px 16px;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  justify-self: flex-start;
+  align-items: center;
+  height: auto;
+  }
+}
+
+
+/* ===== Адаптив для header ===== */
+
+.burger-button {
+  width: 28px;
+  height: 22px;
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: none;
+}
+
+.burger-button .line {
+  position: absolute;
+  width: 100%;
+  height: 3px;
+  background: #071421;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.burger-button .line:nth-child(1) {
+  top: 0;
+}
+
+.burger-button .line:nth-child(2) {
+  top: 9px;
+}
+
+.burger-button .line:nth-child(3) {
+  top: 18px;
+}
+
+/* === АНИМАЦИЯ ОТКРЫТИЯ === */
+
+.burger-button .line.open:nth-child(1) {
+  top: 9px;
+  transform: rotate(45deg);
+}
+
+.burger-button .line.open:nth-child(2) {
+  opacity: 0;
+}
+
+.burger-button .line.open:nth-child(3) {
+  top: 9px;
+  transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+  -moz-transform: rotate(-45deg);
+  -ms-transform: rotate(-45deg);
+  -o-transform: rotate(-45deg);
+}
+
+.mobile-only {
+  display: none;
+}
+
+.desktop-only {
+  display: block;
+}
+
+/* Mobile visibility */
+
+@media (max-width: 1024px) {
+  .mobile-only {
+    display: block;
+  }
+
+  .desktop-only {
+    display: none;
+  }
+
+  .burger-button {
+    display: block;
+  }
+
+  .standart{
+    padding: 20px 20px 0px;
+    gap: 16px;
+  }
+}
+
+/* ===== Стили для услуг ===== */
+.service-category-card{
+  text-decoration: none;
+  background-color: var(--color-light-gray);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: flex-end;
+  cursor: pointer;
+
+  transition:
+    transform 0.3s ease,
+    background-color 0.3s ease,
+    color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.service-category-card:hover {
+  transform: translateY(-4px);
+  background-color: var(--color-light-green);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}

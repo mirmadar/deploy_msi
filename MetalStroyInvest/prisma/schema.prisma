@@ -1,0 +1,288 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  categoryId Int              @id @default(autoincrement())
+  name       String           @unique
+  slug       String           @unique
+  level      Int
+  parentId   Int?
+  sortOrder  Int              @default(0)
+  imageUrl   String?
+  parent     Category?        @relation("CategoryHierarchy", fields: [parentId], references: [categoryId])
+  children   Category[]       @relation("CategoryHierarchy")
+  products   Product[]        @relation("CategoryProducts")
+  filters    CategoryFilter[] @relation("CategoryFilters")
+  shipments  ShipmentPost[]   @relation("CategoryShipments")
+
+  @@index([parentId, name])
+  @@index([slug])
+  @@map("categories")
+}
+
+model Product {
+  productId       Int                     @id @default(autoincrement())
+  name            String
+  price           Float
+  imageUrl        String?
+  slug            String
+  categoryId      Int?
+  isNew           Boolean?                @default(false)
+  status          ProductStatus           @default(IN_STOCK)
+  unit            ProductUnit             @default(SHT)
+  characteristics ProductCharacteristic[]
+  category        Category?               @relation("CategoryProducts", fields: [categoryId], references: [categoryId])
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+
+  @@index([price])
+  @@index([categoryId, productId])
+  @@index([isNew])
+  @@index([slug])
+  @@map("products")
+}
+
+model CharacteristicName {
+  characteristicNameId   Int                     @id @default(autoincrement())
+  name                   String                  @unique
+  valueType              ValueType
+  productCharacteristics ProductCharacteristic[]
+  categoryFilters        CategoryFilter[]        @relation("CharacteristicCategoryFilters")
+
+  @@map("characteristics_names_list")
+}
+
+model ProductCharacteristic {
+  productCharacteristicId Int                @id @default(autoincrement())
+  productId               Int
+  characteristicNameId    Int
+  value                   String
+  characteristicName      CharacteristicName @relation(fields: [characteristicNameId], references: [characteristicNameId])
+  product                 Product            @relation(fields: [productId], references: [productId])
+
+  @@unique([productId, characteristicNameId])
+  @@index([characteristicNameId, value])
+  @@map("product_characteristics")
+}
+
+model CategoryFilter {
+  categoryFilterId     Int                @id @default(autoincrement())
+  categoryId           Int
+  characteristicNameId Int
+  displayOrder         Int                @default(0) // Порядок отображения фильтра
+  category             Category           @relation("CategoryFilters", fields: [categoryId], references: [categoryId], onDelete: Cascade)
+  characteristicName   CharacteristicName @relation("CharacteristicCategoryFilters", fields: [characteristicNameId], references: [characteristicNameId], onDelete: Cascade)
+
+  @@unique([categoryId, characteristicNameId]) // Одна характеристика может быть фильтром только один раз для категории
+  @@index([categoryId])
+  @@map("category_filters")
+}
+
+model User {
+  userId   Int       @id @default(autoincrement())
+  email    String    @unique
+  username String    @unique
+  password String
+  roles    Role[]    @relation("UserRoles")
+  articles Article[]
+
+  @@map("users")
+}
+
+model Article {
+  articleId   Int       @id @default(autoincrement())
+  title       String
+  slug        String    @unique
+  content     String    @db.Text
+  imageUrl    String?
+  publishedAt DateTime?
+  authorId    Int?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  author      User?     @relation(fields: [authorId], references: [userId])
+
+  @@index([slug])
+  @@index([publishedAt])
+  @@map("articles")
+}
+
+model Role {
+  roleId      Int    @id @default(autoincrement())
+  value       String @unique
+  description String
+  users       User[] @relation("UserRoles")
+
+  @@map("roles")
+}
+
+enum ValueType {
+  number
+  text
+}
+
+enum ProductStatus {
+  IN_STOCK
+  OUT_OF_STOCK
+  ARCHIVE
+}
+
+enum ProductUnit {
+  PG_M
+  T
+  KG
+  M
+  M2
+  M3
+  SHT
+  UP
+}
+
+model Cart {
+  id          Int        @id @default(autoincrement())
+  token       String     @unique
+  totalAmount Float      @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  items       CartItem[]
+
+  @@index([token])
+  @@map("carts")
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  cartId    Int
+  productId Int
+  quantity  Int      @default(1)
+  price     Float
+  createdAt DateTime @default(now())
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [productId])
+
+  @@index([cartId])
+  @@index([productId])
+  @@map("cart_items")
+}
+
+model Order {
+  orderId            Int         @id @default(autoincrement())
+  orderNumber        String      @unique
+  clientName         String
+  clientPhone        String
+  clientEmail        String
+  createdAt          DateTime    @default(now())
+  companyEmailSent   Boolean     @default(false)
+  clientEmailSent    Boolean     @default(false)
+  bitrixSent         Boolean     @default(false)
+  companyEmailSentAt DateTime?
+  clientEmailSentAt  DateTime?
+  bitrixSentAt       DateTime?
+  items              OrderItem[]
+
+  @@index([orderNumber])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  orderItemId Int         @id @default(autoincrement())
+  orderId     Int
+  productId   Int
+  productName String
+  quantity    Int
+  unitPrice   Float
+  unit        ProductUnit
+  order       Order       @relation(fields: [orderId], references: [orderId], onDelete: Cascade)
+  product     Product     @relation(fields: [productId], references: [productId])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model City {
+  cityId    Int     @id @default(autoincrement())
+  name      String
+  slug      String  @unique
+  phone     String
+  workHours String?
+  sortOrder Int     @default(0)
+
+  @@map("cities")
+}
+
+model ShipmentPost {
+  shipmentPostId Int        @id @default(autoincrement())
+  title          String
+  imageUrl       String
+  categoryId     Int
+  sortOrder      Int        @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  publishedAt    DateTime?
+  category       Category  @relation("CategoryShipments", fields: [categoryId], references: [categoryId], onDelete: Cascade)
+  description    String    @db.Text
+
+  @@index([categoryId])
+  @@index([createdAt])
+  @@map("shipment_posts")
+}
+
+model ServiceCategory {
+  serviceCategoryId Int               @id @default(autoincrement())
+  name              String
+  slug              String            @unique
+  description       String?           @db.Text
+  sortOrder         Int               @default(0)
+  level             Int               // 0 = корневая, 1 = подкатегория
+  parentId          Int?
+  parent            ServiceCategory?  @relation("ServiceCategoryHierarchy", fields: [parentId], references: [serviceCategoryId])
+  children          ServiceCategory[] @relation("ServiceCategoryHierarchy")
+  services          Service[]         @relation("CategoryServices")
+
+  @@index([parentId])
+  @@index([slug])
+  @@map("service_categories")
+}
+
+// Услуга: привязывается только к подкатегории (level = 1)
+model Service {
+  serviceId         Int            @id @default(autoincrement())
+  name              String
+  slug              String         @unique
+  serviceCategoryId Int
+  sortOrder         Int            @default(0)
+  category          ServiceCategory @relation("CategoryServices", fields: [serviceCategoryId], references: [serviceCategoryId], onDelete: Cascade)
+  blocks            ServiceBlock[]
+
+  @@index([serviceCategoryId])
+  @@index([slug])
+  @@map("services")
+}
+
+enum ServiceBlockType {
+  HEADING
+  TEXT
+  LIST
+  IMAGE
+  DOCUMENTS
+}
+
+model ServiceBlock {
+  serviceBlockId Int             @id @default(autoincrement())
+  serviceId      Int
+  type          ServiceBlockType
+  payload       Json            // содержимое по типу блока
+  sortOrder     Int             @default(0)
+  service       Service         @relation(fields: [serviceId], references: [serviceId], onDelete: Cascade)
+
+  @@index([serviceId])
+  @@map("service_blocks")
+}
