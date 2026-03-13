@@ -1,0 +1,93 @@
+version: "3.9"
+
+# Файл .env не коммитить в git.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: metalstroy-postgres
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    container_name: metalstroy-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  backend:
+    build:
+      context: ./MetalStroyInvest
+      dockerfile: Dockerfile
+    container_name: metalstroy-backend
+    depends_on:
+      - db
+      - elasticsearch
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      PRIVATE_KEY: ${PRIVATE_KEY}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      CALLBACK_RECIPIENT_EMAIL: ${CALLBACK_RECIPIENT_EMAIL}
+      SERVICE_ORDER_RECIPIENT_EMAIL: ${SERVICE_ORDER_RECIPIENT_EMAIL:-}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3002}
+      COMPANY_EMAIL: ${COMPANY_EMAIL}
+      ELASTICSEARCH_NODE: ${ELASTICSEARCH_NODE:-http://elasticsearch:9200}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_REGION: ${S3_REGION}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+    ports:
+      - "3000:3000"
+
+  admin-frontend:
+    build:
+      context: ./msi_admin_panel
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:3000}
+    container_name: metalstroy-admin-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3001:80"
+
+  public-frontend:
+    build:
+      context: ./MSI_PUBLIC_FRONT
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+    container_name: metalstroy-public-frontend
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3002:3000"
+
+volumes:
+  postgres_data:
+  es_data:
