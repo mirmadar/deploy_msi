@@ -542,15 +542,138 @@ export class ProductsService {
     unit?: ProductUnit;
     categoryId?: number;
   }): Promise<number> {
-    return this.searchService.countProductsByFilters({
-      categories: filters.categories,
-      minPrice: filters.minPrice,
-      maxPrice: filters.maxPrice,
-      status: filters.status,
-      isNew: filters.isNew,
-      unit: filters.unit,
-      categoryId: filters.categoryId,
+    const where: Prisma.ProductWhereInput = {};
+
+    if (filters.categories && filters.categories.length > 0) {
+      where.category = {
+        name: {
+          in: filters.categories,
+        },
+      };
+    }
+
+    if (filters.categoryId !== undefined) {
+      where.categoryId = filters.categoryId;
+    }
+
+    if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+      where.price = {};
+      if (filters.minPrice !== undefined) {
+        where.price.gte = filters.minPrice;
+      }
+      if (filters.maxPrice !== undefined) {
+        where.price.lte = filters.maxPrice;
+      }
+    }
+
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
+    if (filters.isNew !== undefined) {
+      where.isNew = filters.isNew;
+    }
+
+    if (filters.unit) {
+      where.unit = filters.unit;
+    }
+
+    return this.prisma.product.count({
+      where,
     });
+  }
+
+  private buildWhereFromFilters(filters: {
+    categories?: string[];
+    minPrice?: number;
+    maxPrice?: number;
+    status?: ProductStatus;
+    isNew?: boolean;
+    unit?: ProductUnit;
+    categoryId?: number;
+  }): Prisma.ProductWhereInput {
+    const where: Prisma.ProductWhereInput = {};
+
+    if (filters.categories && filters.categories.length > 0) {
+      where.category = {
+        name: {
+          in: filters.categories,
+        },
+      };
+    }
+
+    if (filters.categoryId !== undefined) {
+      where.categoryId = filters.categoryId;
+    }
+
+    if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+      where.price = {};
+      if (filters.minPrice !== undefined) {
+        where.price.gte = filters.minPrice;
+      }
+      if (filters.maxPrice !== undefined) {
+        where.price.lte = filters.maxPrice;
+      }
+    }
+
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
+    if (filters.isNew !== undefined) {
+      where.isNew = filters.isNew;
+    }
+
+    if (filters.unit) {
+      where.unit = filters.unit;
+    }
+
+    return where;
+  }
+
+  private async findProductIdsByFiltersFromDb(filters: {
+    categories?: string[];
+    minPrice?: number;
+    maxPrice?: number;
+    status?: ProductStatus;
+    isNew?: boolean;
+    unit?: ProductUnit;
+    categoryId?: number;
+  }): Promise<number[]> {
+    const whereBase = this.buildWhereFromFilters(filters);
+    const productIds: number[] = [];
+    const BATCH_SIZE = 10000;
+    let lastId = 0;
+
+    while (true) {
+      const batch = await this.prisma.product.findMany({
+        where: {
+          ...whereBase,
+          productId: {
+            gt: lastId,
+          },
+        },
+        select: {
+          productId: true,
+        },
+        orderBy: {
+          productId: 'asc',
+        },
+        take: BATCH_SIZE,
+      });
+
+      if (batch.length === 0) {
+        break;
+      }
+
+      for (const p of batch) {
+        productIds.push(p.productId);
+      }
+
+      lastId = batch[batch.length - 1].productId;
+    }
+
+    return productIds;
   }
 
   async bulkUpdateProductsByFilters(
@@ -576,7 +699,7 @@ export class ProductsService {
       throw new HttpException('Необходимо указать хотя бы одно поле для обновления', HttpStatus.BAD_REQUEST);
     }
 
-    const count = await this.searchService.countProductsByFilters({
+    const count = await this.countProductsByFilters({
       categories: filters.categories,
       minPrice: filters.minPrice,
       maxPrice: filters.maxPrice,
@@ -600,15 +723,7 @@ export class ProductsService {
       };
     }
 
-    const productIds = await this.searchService.findProductIdsByFilters({
-      categories: filters.categories,
-      minPrice: filters.minPrice,
-      maxPrice: filters.maxPrice,
-      status: filters.status,
-      isNew: filters.isNew,
-      unit: filters.unit,
-      categoryId: filters.categoryId,
-    });
+    const productIds = await this.findProductIdsByFiltersFromDb(filters);
 
     return this.bulkUpdateProducts(productIds, updateData);
   }
@@ -625,15 +740,7 @@ export class ProductsService {
     },
     confirmCount?: number,
   ) {
-    const count = await this.searchService.countProductsByFilters({
-      categories: filters.categories,
-      minPrice: filters.minPrice,
-      maxPrice: filters.maxPrice,
-      status: filters.status,
-      isNew: filters.isNew,
-      unit: filters.unit,
-      categoryId: filters.categoryId,
-    });
+    const count = await this.countProductsByFilters(filters);
 
     if (confirmCount !== undefined && confirmCount !== count) {
       throw new HttpException(
@@ -649,15 +756,7 @@ export class ProductsService {
       };
     }
 
-    const productIds = await this.searchService.findProductIdsByFilters({
-      categories: filters.categories,
-      minPrice: filters.minPrice,
-      maxPrice: filters.maxPrice,
-      status: filters.status,
-      isNew: filters.isNew,
-      unit: filters.unit,
-      categoryId: filters.categoryId,
-    });
+    const productIds = await this.findProductIdsByFiltersFromDb(filters);
 
     return this.bulkDeleteProducts(productIds);
   }

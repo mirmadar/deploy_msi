@@ -2,8 +2,10 @@
 import axios from "axios";
 import { getToken, removeToken, isTokenExpired } from "../utils/token";
 
+const baseURL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+
 export const http = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL,
 });
 
 // Request interceptor - добавляем токен к каждому запросу

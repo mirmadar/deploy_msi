@@ -62,7 +62,11 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 !/uploads/images/.gitkeep
 
 # scripts
-/scripts/*
+scripts/populate-product-slugs.ts
+scripts/populate-category-slugs.ts
+scripts/populate-category-filters.ts
+scripts/find-skipped-categories.ts
+scripts/clear-category-filters.ts
 
 npx
 
