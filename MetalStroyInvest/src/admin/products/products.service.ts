@@ -347,7 +347,7 @@ export class ProductsService {
         await tx.product.update({
           where: { productId },
           data: {
-            status: ProductStatus.ARCHIVE,
+          status: 'ARCHIVE' as ProductStatus,
             isNew: false,
           },
         });
@@ -487,7 +487,7 @@ export class ProductsService {
           productId: { in: archivableIds },
         },
         data: {
-          status: ProductStatus.ARCHIVE,
+          status: 'ARCHIVE' as ProductStatus,
           isNew: false,
         },
       });

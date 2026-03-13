@@ -66,18 +66,18 @@ export class BulkIndexService {
 
       if (products.length === 0) break;
 
-      const body = await Promise.all(
-        products.flatMap(async (product) => {
-        const characteristics = {};
+      const body: any[] = [];
+      for (const product of products) {
+        const characteristics: Record<string, any> = {};
         for (const c of product.characteristics) {
           characteristics[c.characteristicName.name] = c.value;
         }
-          const categoryPath =
-            product.category && product.category.categoryId
-              ? await this.buildCategoryPath(product.category.categoryId)
-              : null;
+        const categoryPath =
+          product.category && product.category.categoryId
+            ? await this.buildCategoryPath(product.category.categoryId)
+            : null;
 
-          return [
+        body.push(
           {
             index: {
               _index: 'products',
@@ -93,19 +93,19 @@ export class BulkIndexService {
             unit: product.unit,
             slug: product.slug,
             imageUrl: product.imageUrl,
-            category: product.category && {
-              id: product.category.categoryId,
-              name: product.category.name,
-              slug: product.category.slug,
-            },
-              categoryPath,
+            category:
+              product.category && {
+                id: product.category.categoryId,
+                name: product.category.name,
+                slug: product.category.slug,
+              },
+            categoryPath,
             characteristics,
           },
-        ];
-        }),
-      );
+        );
+      }
 
-      const result = await elasticClient.bulk({ refresh: false, body });
+      const result = await elasticClient.bulk({ refresh: 'wait_for', body });
 
       if (result.errors) {
         this.logger.error('Ошибки при bulk-индексации');
@@ -156,7 +156,7 @@ export class BulkIndexService {
           ? await this.buildCategoryPath(product.category.categoryId)
           : null;
 
-      await elasticClient.index({
+      const result = await elasticClient.index({
         index: 'products',
         id: product.productId.toString(),
         body: {
@@ -176,8 +176,13 @@ export class BulkIndexService {
           categoryPath,
           characteristics,
         },
-        refresh: false,
+        refresh: 'wait_for',
       });
+      if (result.result !== 'created' && result.result !== 'updated') {
+        this.logger.warn(
+          `Неожиданный результат индексации продукта ${productId}: ${result.result}`,
+        );
+      }
     } catch (error) {
       this.logger.error(`Ошибка при индексации продукта ${productId}:`, error);
     }
@@ -185,11 +190,16 @@ export class BulkIndexService {
 
   async deleteProduct(productId: number) {
     try {
-      await elasticClient.delete({
+      const result = await elasticClient.delete({
         index: 'products',
         id: productId.toString(),
-        refresh: false,
+        refresh: 'wait_for',
       });
+      if (result.result !== 'deleted' && result.result !== 'not_found') {
+        this.logger.warn(
+          `Неожиданный результат удаления продукта ${productId} из индекса: ${result.result}`,
+        );
+      }
     } catch (error) {
       if (error.meta?.statusCode !== 404) {
         this.logger.error(`Ошибка при удалении продукта ${productId} из индекса:`, error);
@@ -212,18 +222,18 @@ export class BulkIndexService {
 
       if (products.length === 0) return;
 
-      const body = await Promise.all(
-        products.flatMap(async (product) => {
-        const characteristics = {};
+      const body: any[] = [];
+      for (const product of products) {
+        const characteristics: Record<string, any> = {};
         for (const c of product.characteristics) {
           characteristics[c.characteristicName.name] = c.value;
         }
-          const categoryPath =
-            product.category && product.category.categoryId
-              ? await this.buildCategoryPath(product.category.categoryId)
-              : null;
+        const categoryPath =
+          product.category && product.category.categoryId
+            ? await this.buildCategoryPath(product.category.categoryId)
+            : null;
 
-          return [
+        body.push(
           {
             index: {
               _index: 'products',
@@ -239,19 +249,27 @@ export class BulkIndexService {
             unit: product.unit,
             slug: product.slug,
             imageUrl: product.imageUrl,
-            category: product.category && {
-              id: product.category.categoryId,
-              name: product.category.name,
-              slug: product.category.slug,
-            },
-              categoryPath,
+            category:
+              product.category && {
+                id: product.category.categoryId,
+                name: product.category.name,
+                slug: product.category.slug,
+              },
+            categoryPath,
             characteristics,
           },
-        ];
-        }),
-      );
+        );
+      }
 
-      await elasticClient.bulk({ refresh: false, body });
+      const result = await elasticClient.bulk({ refresh: 'wait_for', body });
+      if (result.errors) {
+        this.logger.error('Ошибки при массовой индексации продуктов', {
+          itemsWithErrors: result.items?.filter((i: any) => {
+            const op = i.index || i.create || i.update;
+            return op && op.error;
+          }),
+        });
+      }
 
       body.length = 0;
     } catch (error) {

@@ -45,10 +45,23 @@ export class PublicSearchController {
         (item: any) => item?.status !== 'ARCHIVE',
       );
       const removedCount = originalData.length - filteredData.length;
+      // Оставляем в списке категорий только те, по которым реально остались товары
+      let categories = (result as any).categories;
+      if (Array.isArray(categories)) {
+        const categoryIdsWithProducts = new Set(
+          filteredData
+            .map((item: any) => item?.category?.id)
+            .filter((id: number | undefined) => id != null),
+        );
+        categories = categories.filter(
+          (c: any) => categoryIdsWithProducts.has(c.id),
+        );
+      }
 
       return {
         ...(result as any),
         data: filteredData,
+        categories,
         total:
           typeof (result as any).total === 'number'
             ? Math.max(0, (result as any).total - removedCount)
