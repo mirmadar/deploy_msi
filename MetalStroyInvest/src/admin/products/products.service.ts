@@ -535,6 +535,7 @@ export class ProductsService {
 
   async countProductsByFilters(filters: {
     categories?: string[];
+    categoryIds?: number[];
     minPrice?: number;
     maxPrice?: number;
     status?: ProductStatus;
@@ -542,56 +543,20 @@ export class ProductsService {
     unit?: ProductUnit;
     categoryId?: number;
   }): Promise<number> {
-    const where: Prisma.ProductWhereInput = {};
-
-    if (filters.categories && filters.categories.length > 0) {
-      where.category = {
-        name: {
-          in: filters.categories,
-        },
-      };
-    }
-
-    if (filters.categoryId !== undefined) {
-      where.categoryId = filters.categoryId;
-    }
-
-    if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
-      where.price = {};
-      if (filters.minPrice !== undefined) {
-        where.price.gte = filters.minPrice;
-      }
-      if (filters.maxPrice !== undefined) {
-        where.price.lte = filters.maxPrice;
-      }
-    }
-
-    if (filters.status) {
-      where.status = filters.status;
-    }
-
-    if (filters.isNew !== undefined) {
-      where.isNew = filters.isNew;
-    }
-
-    if (filters.unit) {
-      where.unit = filters.unit;
-    }
-
-    return this.prisma.product.count({
-      where,
-    });
+    const where = await this.buildWhereFromFilters(filters);
+    return this.prisma.product.count({ where });
   }
 
-  private buildWhereFromFilters(filters: {
+  private async buildWhereFromFilters(filters: {
     categories?: string[];
+    categoryIds?: number[];
     minPrice?: number;
     maxPrice?: number;
     status?: ProductStatus;
     isNew?: boolean;
     unit?: ProductUnit;
     categoryId?: number;
-  }): Prisma.ProductWhereInput {
+  }): Promise<Prisma.ProductWhereInput> {
     const where: Prisma.ProductWhereInput = {};
 
     if (filters.categories && filters.categories.length > 0) {
@@ -602,7 +567,10 @@ export class ProductsService {
       };
     }
 
-    if (filters.categoryId !== undefined) {
+    if (filters.categoryIds && filters.categoryIds.length > 0) {
+      const resolvedIds = await this.categoriesService.getCategoryIdsInBranch(filters.categoryIds);
+      where.categoryId = { in: resolvedIds };
+    } else if (filters.categoryId !== undefined) {
       where.categoryId = filters.categoryId;
     }
 
@@ -633,6 +601,7 @@ export class ProductsService {
 
   private async findProductIdsByFiltersFromDb(filters: {
     categories?: string[];
+    categoryIds?: number[];
     minPrice?: number;
     maxPrice?: number;
     status?: ProductStatus;
@@ -640,7 +609,7 @@ export class ProductsService {
     unit?: ProductUnit;
     categoryId?: number;
   }): Promise<number[]> {
-    const whereBase = this.buildWhereFromFilters(filters);
+    const whereBase = await this.buildWhereFromFilters(filters);
     const productIds: number[] = [];
     const BATCH_SIZE = 10000;
     let lastId = 0;
@@ -679,6 +648,7 @@ export class ProductsService {
   async bulkUpdateProductsByFilters(
     filters: {
       categories?: string[];
+      categoryIds?: number[];
       minPrice?: number;
       maxPrice?: number;
       status?: ProductStatus;
@@ -701,6 +671,7 @@ export class ProductsService {
 
     const count = await this.countProductsByFilters({
       categories: filters.categories,
+      categoryIds: filters.categoryIds,
       minPrice: filters.minPrice,
       maxPrice: filters.maxPrice,
       status: filters.status,
@@ -731,6 +702,7 @@ export class ProductsService {
   async bulkDeleteProductsByFilters(
     filters: {
       categories?: string[];
+      categoryIds?: number[];
       minPrice?: number;
       maxPrice?: number;
       status?: ProductStatus;

@@ -1,6 +1,7 @@
 // src/pages/Products/components/ProductFilters/ProductFilters.js
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getFilters } from "../../../api/search.api";
+import { CategoriesApi } from "../../../api/categories.api";
 import {
   Box,
   Typography,
@@ -15,14 +16,87 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Collapse,
+  IconButton,
 } from "@mui/material";
-import { Search as SearchIcon } from "@mui/icons-material";
+import { Search as SearchIcon, ExpandMore, ChevronRight } from "@mui/icons-material";
 import { styles } from "./styles/ProductFilters.styles";
 import { PRODUCT_UNITS_OPTIONS } from "../../../utils/productUnits";
 
+function CategoryTreeNode({ node, level, selectedIds, expandedIds, search, onToggle, onExpand }) {
+  const hasChildren = node.children && node.children.length > 0;
+  const isExpanded = expandedIds.has(node.categoryId);
+  const isSelected = selectedIds.includes(node.categoryId);
+  const nameMatch = !search || node.name.toLowerCase().includes(search.toLowerCase());
+
+  const childrenMatch = useMemo(() => {
+    if (!search || !hasChildren) return true;
+    const check = (n) =>
+      n.name.toLowerCase().includes(search.toLowerCase()) ||
+      (n.children && n.children.some(check));
+    return node.children.some(check);
+  }, [search, hasChildren, node.children]);
+
+  const visible = nameMatch || childrenMatch;
+  if (!visible) return null;
+
+  return (
+    <Box key={node.categoryId} sx={{ pl: level * 2 }}>
+      <Box sx={styles.treeNodeRow}>
+        <IconButton
+          size="small"
+          onClick={() => onExpand(node.categoryId)}
+          sx={{ p: 0.25, visibility: hasChildren ? "visible" : "hidden" }}
+        >
+          {isExpanded ? <ExpandMore fontSize="small" /> : <ChevronRight fontSize="small" />}
+        </IconButton>
+        <Checkbox
+          checked={isSelected}
+          onChange={(e) => {
+            e.stopPropagation();
+            onToggle(node.categoryId);
+          }}
+          onClick={(e) => e.stopPropagation()}
+          size="small"
+          sx={{ py: 0, px: 0.5 }}
+        />
+        <Typography
+          variant="body2"
+          sx={styles.categoryLabel}
+          onClick={() => onToggle(node.categoryId)}
+        >
+          {node.name}
+          {node.branchProductCount != null && (
+            <Typography component="span" variant="caption" sx={styles.categoryCount}>
+              {" "}({node.branchProductCount})
+            </Typography>
+          )}
+        </Typography>
+      </Box>
+      {hasChildren && (
+        <Collapse in={isExpanded} unmountOnExit>
+          {node.children.map((child) => (
+            <CategoryTreeNode
+              key={child.categoryId}
+              node={child}
+              level={level + 1}
+              selectedIds={selectedIds}
+              expandedIds={expandedIds}
+              search={search}
+              onToggle={onToggle}
+              onExpand={onExpand}
+            />
+          ))}
+        </Collapse>
+      )}
+    </Box>
+  );
+}
+
 export default function ProductFilters({ onChange, appliedFilters }) {
-  const [categories, setCategories] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [categoryTree, setCategoryTree] = useState([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
+  const [expandedIds, setExpandedIds] = useState(() => new Set());
   const [priceRange, setPriceRange] = useState([0, 0]);
   const [minPriceInput, setMinPriceInput] = useState("");
   const [maxPriceInput, setMaxPriceInput] = useState("");
@@ -30,24 +104,25 @@ export default function ProductFilters({ onChange, appliedFilters }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Значения фильтров
   const [isNew, setIsNew] = useState(false);
   const [status, setStatus] = useState("");
   const [unit, setUnit] = useState("");
-  
-  // Поиск по категориям
   const [categorySearch, setCategorySearch] = useState("");
 
-  // Синхронизация с примененными фильтрами
   useEffect(() => {
-    if (appliedFilters && initialPriceRange[0] !== 0 && initialPriceRange[1] !== 0) {
-      if (appliedFilters.categories && appliedFilters.categories.length > 0) {
-        setSelectedCategories(appliedFilters.categories);
-      } else {
-        setSelectedCategories([]);
-      }
-      
-      // Проверяем, что цена установлена и отличается от начального диапазона или [0, 0]
+    if (!appliedFilters) return;
+    if (appliedFilters.categoryIds && appliedFilters.categoryIds.length > 0) {
+      setSelectedCategoryIds(appliedFilters.categoryIds);
+    } else {
+      setSelectedCategoryIds([]);
+    }
+    if (appliedFilters.isNew !== undefined) setIsNew(appliedFilters.isNew);
+    else setIsNew(false);
+    if (appliedFilters.status) setStatus(appliedFilters.status);
+    else setStatus("");
+    if (appliedFilters.unit) setUnit(appliedFilters.unit);
+    else setUnit("");
+    if (initialPriceRange[0] !== 0 || initialPriceRange[1] !== 0) {
       if (appliedFilters.price && 
           Array.isArray(appliedFilters.price) && 
           appliedFilters.price.length === 2) {
@@ -70,25 +145,6 @@ export default function ProductFilters({ onChange, appliedFilters }) {
         setMinPriceInput(initialPriceRange[0].toString());
         setMaxPriceInput(initialPriceRange[1].toString());
       }
-      
-      // Синхронизация фильтров isNew и status
-      if (appliedFilters.isNew !== undefined) {
-        setIsNew(appliedFilters.isNew);
-      } else {
-        setIsNew(false);
-      }
-      
-      if (appliedFilters.status) {
-        setStatus(appliedFilters.status);
-      } else {
-        setStatus("");
-      }
-      
-      if (appliedFilters.unit) {
-        setUnit(appliedFilters.unit);
-      } else {
-        setUnit("");
-      }
     }
   }, [appliedFilters, initialPriceRange]);
 
@@ -98,25 +154,19 @@ export default function ProductFilters({ onChange, appliedFilters }) {
     
     const fetchData = async () => {
       try {
-        // Загружаем фильтры (категории и ценовой диапазон) из одного endpoint
-        const filtersData = await getFilters();
-        const filtersResponse = filtersData?.data || filtersData || {};
-        
-        // Категории теперь в формате дерева с label и children
-        const categoriesData = filtersResponse?.categories || [];
-        console.log("Загруженные категории:", categoriesData);
-        console.log("Количество категорий:", categoriesData.length);
-        setCategories(categoriesData);
-        
-        // Ценовой диапазон (бекенд возвращает priceRange, но может быть и price для обратной совместимости)
+        const [filtersRes, treeRes] = await Promise.all([
+          getFilters(),
+          CategoriesApi.getTreeForFilters().catch(() => ({ data: [] })),
+        ]);
+        const filtersResponse = filtersRes?.data || filtersRes || {};
+        const treeData = treeRes?.data ?? [];
+        setCategoryTree(Array.isArray(treeData) ? treeData : []);
+
         const priceInfo = filtersResponse?.priceRange || filtersResponse?.price || { min: 0, max: 0 };
         const initialPrice = [
-          typeof priceInfo.min === 'number' && priceInfo.min !== null ? priceInfo.min : 0,
-          typeof priceInfo.max === 'number' && priceInfo.max !== null ? priceInfo.max : 0,
+          typeof priceInfo.min === "number" && priceInfo.min !== null ? priceInfo.min : 0,
+          typeof priceInfo.max === "number" && priceInfo.max !== null ? priceInfo.max : 0,
         ];
-        
-        console.log("Загруженный ценовой диапазон:", priceInfo, "→", initialPrice);
-        
         setInitialPriceRange(initialPrice);
         setPriceRange((prev) => {
           if (prev[0] === 0 && prev[1] === 0) {
@@ -130,21 +180,19 @@ export default function ProductFilters({ onChange, appliedFilters }) {
         let errorMessage = "Не удалось загрузить фильтры.";
         if (err.response) {
           const status = err.response.status;
-          const statusText = err.response.statusText || '';
-          
+          const statusText = err.response.statusText || "";
           if (status === 404) {
-            errorMessage = `Эндпоинт не найден (404). Проверьте на бэкенде:\n1. Зарегистрирован ли SearchModule в AppModule\n2. Есть ли глобальный префикс API (например, /api)\n3. Доступен ли маршрут GET /search/filters`;
+            errorMessage = "Эндпоинт не найден (404). Проверьте бэкенд и маршруты.";
           } else {
-            errorMessage = `Ошибка сервера ${status}${statusText ? ': ' + statusText : ''}. Проверьте, что эндпоинт /search/filters доступен.`;
+            errorMessage = `Ошибка сервера ${status}${statusText ? ": " + statusText : ""}.`;
           }
         } else if (err.request) {
-          errorMessage = "Сервер не отвечает. Проверьте: запущен ли сервер на http://localhost:3000, нет ли проблем с CORS, доступен ли эндпоинт /search/filters";
+          errorMessage = "Сервер не отвечает. Проверьте запуск бэкенда и CORS.";
         } else if (err.message) {
           errorMessage = err.message;
         }
-        
         setError(errorMessage);
-        setCategories([]);
+        setCategoryTree([]);
         setInitialPriceRange([0, 0]);
         setPriceRange([0, 0]);
         setMinPriceInput("0");
@@ -153,7 +201,7 @@ export default function ProductFilters({ onChange, appliedFilters }) {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, []);
 
@@ -207,33 +255,33 @@ export default function ProductFilters({ onChange, appliedFilters }) {
     }
   };
 
-  const handleCategoryToggle = (categoryName) => {
-    if (!categoryName) {
-      console.warn("Попытка переключить категорию без названия");
-      return;
-    }
-    setSelectedCategories((prev) => {
-      const isSelected = prev.includes(categoryName);
-      const newSelection = isSelected
-        ? prev.filter((name) => name !== categoryName)
-        : [...prev, categoryName];
-      console.log("Выбранные категории:", newSelection);
-      return newSelection;
+  const handleCategoryToggle = (categoryId) => {
+    setSelectedCategoryIds((prev) => {
+      const isSelected = prev.includes(categoryId);
+      return isSelected ? prev.filter((id) => id !== categoryId) : [...prev, categoryId];
+    });
+  };
+
+  const handleExpand = (categoryId) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) next.delete(categoryId);
+      else next.add(categoryId);
+      return next;
     });
   };
 
   const applyFilters = () => {
     const filters = {
-      categories: [],
+      categoryIds: [],
       price: null,
       isNew: undefined,
       status: undefined,
       unit: undefined,
     };
-    
-    // Применяем категории если выбраны категории
-    if (selectedCategories.length > 0) {
-      filters.categories = selectedCategories;
+
+    if (selectedCategoryIds.length > 0) {
+      filters.categoryIds = selectedCategoryIds;
     }
     
     // Применяем фильтр цены если он отличается от начального диапазона
@@ -264,14 +312,14 @@ export default function ProductFilters({ onChange, appliedFilters }) {
   };
 
   const resetFilters = () => {
-    setSelectedCategories([]);
+    setSelectedCategoryIds([]);
     setPriceRange(initialPriceRange);
     setMinPriceInput(initialPriceRange[0].toString());
     setMaxPriceInput(initialPriceRange[1].toString());
     setIsNew(false);
     setStatus("");
     setUnit("");
-    onChange({ categories: [], price: null, isNew: undefined, status: undefined, unit: undefined });
+    onChange({ categoryIds: [], price: null, isNew: undefined, status: undefined, unit: undefined });
   };
 
   if (loading) {
@@ -307,33 +355,8 @@ export default function ProductFilters({ onChange, appliedFilters }) {
   }
 
   const canUsePriceSlider = initialPriceRange[0] < initialPriceRange[1];
-  const hasCategories = categories && categories.length > 0;
-  const hasAnyFilters = hasCategories || canUsePriceSlider || true; // Всегда показываем фильтры по новинке и статусу
-
-  // Фильтрация и сортировка категорий
-  const sortedAndFilteredCategories = categories
-    .filter((category) => {
-      const categoryLabel = category.label || category.name || "";
-      if (!categoryLabel) return false;
-      // Фильтрация по поисковому запросу
-      if (categorySearch.trim()) {
-        return categoryLabel.toLowerCase().includes(categorySearch.toLowerCase());
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      const aLabel = (a.label || a.name || "").toLowerCase();
-      const bLabel = (b.label || b.name || "").toLowerCase();
-      const aIsSelected = selectedCategories.includes(a.label || a.name || "");
-      const bIsSelected = selectedCategories.includes(b.label || b.name || "");
-      
-      // Сначала выбранные категории
-      if (aIsSelected && !bIsSelected) return -1;
-      if (!aIsSelected && bIsSelected) return 1;
-      
-      // Затем по алфавиту
-      return aLabel.localeCompare(bLabel, 'ru', { sensitivity: 'base' });
-    });
+  const hasCategories = categoryTree && categoryTree.length > 0;
+  const hasAnyFilters = hasCategories || canUsePriceSlider || true;
 
   return (
     <Box sx={styles.container}>
@@ -353,73 +376,37 @@ export default function ProductFilters({ onChange, appliedFilters }) {
                     Категории
                   </Typography>
                   <Box sx={styles.filterContent}>
-                    {categories && categories.length > 0 ? (
-                      <>
-                        <TextField
-                          placeholder="Поиск категории..."
-                          value={categorySearch}
-                          onChange={(e) => setCategorySearch(e.target.value)}
-                          size="small"
-                          fullWidth
-                          sx={styles.categorySearchField}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <SearchIcon fontSize="small" sx={styles.searchIcon} />
-                              </InputAdornment>
-                            ),
-                          }}
-                        />
-                        <Box sx={styles.categoriesList}>
-                          {sortedAndFilteredCategories.length > 0 ? (
-                            sortedAndFilteredCategories.map((category, index) => {
-                              const categoryLabel = category.label || category.name;
-                              if (!categoryLabel) return null;
-                              const isSelected = selectedCategories.includes(categoryLabel);
-                              return (
-                                <Box
-                                  key={categoryLabel}
-                                  sx={styles.categoryItem}
-                                >
-                                  <Checkbox
-                                    checked={isSelected}
-                                    onChange={(e) => {
-                                      e.stopPropagation();
-                                      handleCategoryToggle(categoryLabel);
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                    size="small"
-                                  />
-                                  <Typography 
-                                    variant="body2" 
-                                    sx={styles.categoryLabel}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleCategoryToggle(categoryLabel);
-                                    }}
-                                  >
-                                    {categoryLabel}
-                                    {category.count && (
-                                      <Typography component="span" variant="caption" sx={styles.categoryCount}>
-                                        ({category.count})
-                                      </Typography>
-                                    )}
-                                  </Typography>
-                                </Box>
-                              );
-                            })
-                          ) : (
-                            <Typography variant="body2" color="text.secondary" sx={styles.noResults}>
-                              Категории не найдены
-                            </Typography>
-                          )}
-                        </Box>
-                      </>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        Категории загружаются...
-                      </Typography>
-                    )}
+                    <TextField
+                      placeholder="Поиск категории..."
+                      value={categorySearch}
+                      onChange={(e) => setCategorySearch(e.target.value)}
+                      size="small"
+                      fullWidth
+                      sx={styles.categorySearchField}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon fontSize="small" sx={styles.searchIcon} />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                    <Box sx={styles.categoriesList}>
+                      <Box sx={styles.treeView}>
+                        {categoryTree.map((node) => (
+                          <CategoryTreeNode
+                            key={node.categoryId}
+                            node={node}
+                            level={0}
+                            selectedIds={selectedCategoryIds}
+                            expandedIds={expandedIds}
+                            search={categorySearch.trim()}
+                            onToggle={handleCategoryToggle}
+                            onExpand={handleExpand}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
                   </Box>
                 </Box>
               )}

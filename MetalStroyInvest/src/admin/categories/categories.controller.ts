@@ -47,6 +47,11 @@ export class CategoriesController {
     return this.categoriesService.getCategoryTree();
   }
 
+  @Get('tree-for-filters')
+  async getTreeForFilters() {
+    return this.categoriesService.getCategoryTreeForFilters();
+  }
+
   @Get(':id')
   async getById(@Param('id', ParseIntPipe) id: number) {
     return this.categoriesService.getCategoryById(id);

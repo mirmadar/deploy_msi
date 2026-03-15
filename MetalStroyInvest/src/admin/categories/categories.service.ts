@@ -15,6 +15,10 @@ export interface CategoryNode {
   pathItems: { id: number; name: string }[];
 }
 
+export interface CategoryNodeWithCount extends CategoryNode {
+  branchProductCount: number;
+}
+
 @Injectable()
 export class CategoriesService {
   constructor(
@@ -369,6 +373,77 @@ export class CategoriesService {
     });
 
     return roots;
+  }
+
+  /** Возвращает id категории и всех её потомков. Загружает категории один раз и строит список в памяти. */
+  async getDescendantCategoryIds(categoryId: number): Promise<number[]> {
+    const all = await this.prisma.category.findMany({
+      select: { categoryId: true, parentId: true },
+    });
+    return this.collectDescendantIds(all, categoryId);
+  }
+
+  /** Собирает id узла и всех потомков по уже загруженному списку категорий. */
+  private collectDescendantIds(
+    all: { categoryId: number; parentId: number | null }[],
+    categoryId: number,
+  ): number[] {
+    const byParent = new Map<number | null, { categoryId: number }[]>();
+    all.forEach((c) => {
+      const list = byParent.get(c.parentId) ?? [];
+      list.push({ categoryId: c.categoryId });
+      byParent.set(c.parentId, list);
+    });
+    const result: number[] = [];
+    const stack = [categoryId];
+    while (stack.length) {
+      const id = stack.pop()!;
+      result.push(id);
+      const children = byParent.get(id) ?? [];
+      children.forEach((ch) => stack.push(ch.categoryId));
+    }
+    return result;
+  }
+
+  /** Для набора id категорий возвращает объединение (каждая категория + все потомки). Один запрос к БД. */
+  async getCategoryIdsInBranch(categoryIds: number[]): Promise<number[]> {
+    if (!categoryIds?.length) return [];
+    const all = await this.prisma.category.findMany({
+      select: { categoryId: true, parentId: true },
+    });
+    const seen = new Set<number>();
+    for (const id of categoryIds) {
+      this.collectDescendantIds(all, id).forEach((i) => seen.add(i));
+    }
+    return Array.from(seen);
+  }
+
+  /** Дерево категорий с количеством товаров в ветке (сама категория + потомки) для фильтра товаров. */
+  async getCategoryTreeForFilters(): Promise<CategoryNodeWithCount[]> {
+    const tree = await this.getCategoryTree();
+    const counts = await this.prisma.product.groupBy({
+      by: ['categoryId'],
+      _count: { productId: true },
+      where: { categoryId: { not: null } },
+    });
+    const countByCategoryId = new Map<number, number>();
+    counts.forEach((r) => {
+      if (r.categoryId != null) countByCategoryId.set(r.categoryId, r._count.productId);
+    });
+
+    function addBranchCount(node: CategoryNode): number {
+      const direct = countByCategoryId.get(node.categoryId) ?? 0;
+      let childrenTotal = 0;
+      node.children.forEach((ch) => {
+        childrenTotal += addBranchCount(ch);
+      });
+      const branch = direct + childrenTotal;
+      (node as CategoryNodeWithCount).branchProductCount = branch;
+      return branch;
+    }
+
+    tree.forEach((root) => addBranchCount(root));
+    return tree as CategoryNodeWithCount[];
   }
 
   async getCategoryOrFail(categoryId: number) {

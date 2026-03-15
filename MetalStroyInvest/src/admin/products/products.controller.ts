@@ -22,8 +22,9 @@ import { BulkDeleteProductsDto } from './dto/bulk-delete-products.dto';
 import { BulkUpdateByFiltersDto } from './dto/bulk-update-by-filters.dto';
 import { BulkDeleteByFiltersDto } from './dto/bulk-delete-by-filters.dto';
 import { SearchService } from 'src/admin/search/search.service';
-import { parseCategories, parsePrice, parseBoolean, parsePagination, parseSortParams } from 'src/shared/common/utils/query-parser.util';
+import { parseCategories, parseCategoryIds, parsePrice, parseBoolean, parsePagination, parseSortParams } from 'src/shared/common/utils/query-parser.util';
 import { JwtAuthGuard } from 'src/admin/auth/guards/jwt-auth.guard';
+import { CategoriesService } from 'src/admin/categories/categories.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('admin/products')
@@ -31,6 +32,7 @@ export class ProductsController {
   constructor(
     private readonly productsService: ProductsService,
     private readonly searchService: SearchService,
+    private readonly categoriesService: CategoriesService,
   ) {}
 
   @Post()
@@ -44,6 +46,7 @@ export class ProductsController {
     @Query('pageSize') pageSize = '20',
     @Query('search') search?: string,
     @Query('categories') categories?: string | string[],
+    @Query('categoryIds') categoryIdsParam?: string | string[],
     @Query('minPrice') minPriceStr?: string,
     @Query('maxPrice') maxPriceStr?: string,
     @Query('status') status?: string,
@@ -55,6 +58,7 @@ export class ProductsController {
   ) {
     const { page: pageNumber, pageSize: pageSizeNumber } = parsePagination(page, pageSize);
     const categoriesArray = parseCategories(categories, request?.query);
+    const categoryIds = parseCategoryIds(categoryIdsParam, request?.query);
     const minPrice = parsePrice(minPriceStr);
     const maxPrice = parsePrice(maxPriceStr);
     const isNew = parseBoolean(isNewStr);
@@ -65,7 +69,19 @@ export class ProductsController {
       'productId',
     );
 
-    const hasFilters = (categoriesArray && categoriesArray.length > 0) || minPrice !== undefined || maxPrice !== undefined || status !== undefined || isNew !== undefined || unit !== undefined;
+    let resolvedCategoryIds: number[] | undefined;
+    if (categoryIds?.length) {
+      resolvedCategoryIds = await this.categoriesService.getCategoryIdsInBranch(categoryIds);
+    }
+
+    const hasFilters =
+      (categoriesArray && categoriesArray.length > 0) ||
+      (resolvedCategoryIds && resolvedCategoryIds.length > 0) ||
+      minPrice !== undefined ||
+      maxPrice !== undefined ||
+      status !== undefined ||
+      isNew !== undefined ||
+      unit !== undefined;
 
     if (search || hasFilters) {
       return this.searchService.searchProducts({
@@ -73,6 +89,7 @@ export class ProductsController {
         page: pageNumber,
         pageSize: pageSizeNumber,
         categories: categoriesArray,
+        categoryIds: resolvedCategoryIds,
         minPrice: minPrice && !isNaN(minPrice) ? minPrice : undefined,
         maxPrice: maxPrice && !isNaN(maxPrice) ? maxPrice : undefined,
         status: status,
@@ -89,6 +106,7 @@ export class ProductsController {
   @Get('count-by-filters')
   async countByFilters(
     @Query('categories') categories?: string | string[],
+    @Query('categoryIds') categoryIdsParam?: string | string[],
     @Query('minPrice') minPriceStr?: string,
     @Query('maxPrice') maxPriceStr?: string,
     @Query('status') status?: string,
@@ -98,13 +116,20 @@ export class ProductsController {
     @Req() request?: Request,
   ) {
     const categoriesArray = parseCategories(categories, request?.query);
+    const categoryIds = parseCategoryIds(categoryIdsParam, request?.query);
     const minPrice = parsePrice(minPriceStr);
     const maxPrice = parsePrice(maxPriceStr);
     const isNew = parseBoolean(isNewStr);
     const categoryId = categoryIdStr ? parseInt(categoryIdStr, 10) : undefined;
 
+    let resolvedCategoryIds: number[] | undefined;
+    if (categoryIds?.length) {
+      resolvedCategoryIds = await this.categoriesService.getCategoryIdsInBranch(categoryIds);
+    }
+
     const count = await this.productsService.countProductsByFilters({
       categories: categoriesArray,
+      categoryIds: resolvedCategoryIds,
       minPrice: minPrice && !isNaN(minPrice) ? minPrice : undefined,
       maxPrice: maxPrice && !isNaN(maxPrice) ? maxPrice : undefined,
       status: status as ProductStatus | undefined,

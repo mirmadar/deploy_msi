@@ -154,9 +154,8 @@ export const ProductsList = () => {
     refresh();
   };
 
-  const handleFilterChange = ({ categories, price, isNew, status, unit }) => {
-    console.log("ProductsList.handleFilterChange: получены фильтры:", { categories, price, isNew, status, unit });
-    setFilters({ categories, price, isNew, status, unit });
+  const handleFilterChange = ({ categoryIds, price, isNew, status, unit }) => {
+    setFilters({ categoryIds: categoryIds ?? [], price, isNew, status, unit });
     // Сбрасываем выбор по фильтрам при изменении фильтров
     if (isSelectionByFilters) {
       setIsSelectionByFilters(false);
@@ -270,7 +269,7 @@ export const ProductsList = () => {
         onFiltersClick={() => setFiltersDrawerOpen(true)}
         total={total}
         onSelectAllByFilters={handleSelectAllByFilters}
-        hasActiveFilters={!!(filters.categories?.length || filters.price || filters.isNew !== undefined || filters.status || filters.unit)}
+        hasActiveFilters={!!(filters.categoryIds?.length || filters.price || filters.isNew !== undefined || filters.status || filters.unit)}
       />
 
       <ProductBulkActions

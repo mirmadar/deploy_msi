@@ -1,5 +1,5 @@
 // Стили для ProductFiltersDrawer
-const DRAWER_WIDTH = 320;
+const DRAWER_WIDTH = 420;
 
 export const styles = {
   drawer: {

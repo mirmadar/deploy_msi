@@ -6,9 +6,8 @@
 export const convertFiltersToBackendFormat = (filters) => {
   const backendFilters = {};
 
-  // Категории
-  if (filters.categories && filters.categories.length > 0) {
-    backendFilters.categories = filters.categories;
+  if (filters.categoryIds && filters.categoryIds.length > 0) {
+    backendFilters.categoryIds = filters.categoryIds;
   }
 
   // Цена

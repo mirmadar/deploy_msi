@@ -34,10 +34,13 @@ export const useProducts = (initialPage = 0, initialRowsPerPage = 25) => {
     const sortByParam = params.get("sortBy") || "productId";
     const sortOrderParam = params.get("sortOrder") === "asc" ? "asc" : "desc";
 
-    const categoriesParam = params.get("categories");
-    const categories =
-      categoriesParam && categoriesParam.trim()
-        ? categoriesParam.split(",").map((c) => c.trim()).filter(Boolean)
+    const categoryIdsParam = params.get("categoryIds");
+    const categoryIds =
+      categoryIdsParam && categoryIdsParam.trim()
+        ? categoryIdsParam
+            .split(",")
+            .map((c) => parseInt(c.trim(), 10))
+            .filter((n) => !Number.isNaN(n))
         : [];
 
     const minPriceParam = params.get("minPrice");
@@ -62,7 +65,7 @@ export const useProducts = (initialPage = 0, initialRowsPerPage = 25) => {
       sortBy: sortByParam,
       sortOrder: sortOrderParam,
       filters: {
-        categories,
+        categoryIds,
         price,
         isNew,
         status: statusParam,
@@ -90,11 +93,8 @@ export const useProducts = (initialPage = 0, initialRowsPerPage = 25) => {
         search: search || undefined,
       };
 
-      // Добавляем фильтры по категориям
-      console.log("fetchProducts: текущие фильтры:", filters);
-      if (filters.categories && filters.categories.length > 0) {
-        params.categories = filters.categories;
-        console.log("fetchProducts: добавлены категории в параметры:", filters.categories);
+      if (filters.categoryIds && filters.categoryIds.length > 0) {
+        params.categoryIds = filters.categoryIds;
       }
 
       // Добавляем фильтры по цене
@@ -153,10 +153,10 @@ export const useProducts = (initialPage = 0, initialRowsPerPage = 25) => {
       params.delete("search");
     }
 
-    if (filters.categories && filters.categories.length > 0) {
-      params.set("categories", filters.categories.join(","));
+    if (filters.categoryIds && filters.categoryIds.length > 0) {
+      params.set("categoryIds", filters.categoryIds.join(","));
     } else {
-      params.delete("categories");
+      params.delete("categoryIds");
     }
 
     if (filters.price && Array.isArray(filters.price) && filters.price.length === 2) {

@@ -59,6 +59,7 @@ export class SearchService {
     {
       query,
       categories,
+      categoryIds,
       minPrice,
       maxPrice,
       status,
@@ -68,6 +69,7 @@ export class SearchService {
     }: {
       query?: string;
       categories?: string[];
+      categoryIds?: number[];
       minPrice?: number;
       maxPrice?: number;
       status?: string;
@@ -171,6 +173,14 @@ export class SearchService {
       }
     }
 
+    if (categoryIds && categoryIds.length > 0) {
+      filter.push({
+        terms: {
+          'category.id': categoryIds,
+        },
+      });
+    }
+
     if (minPrice !== undefined || maxPrice !== undefined) {
       const priceRange: any = {};
       if (minPrice !== undefined) {
@@ -249,6 +259,7 @@ export class SearchService {
     page,
     pageSize,
     categories,
+    categoryIds,
     minPrice,
     maxPrice,
     status,
@@ -262,6 +273,7 @@ export class SearchService {
     page: number;
     pageSize: number;
     categories?: string[];
+    categoryIds?: number[];
     minPrice?: number;
     maxPrice?: number;
     status?: string;
@@ -295,6 +307,7 @@ export class SearchService {
       {
         query: trimmedQuery,
         categories,
+        categoryIds,
         minPrice,
         maxPrice,
         status,
@@ -386,6 +399,7 @@ export class SearchService {
       {
         query: trimmedQuery,
         categories,
+        categoryIds,
         minPrice,
         maxPrice,
         status,
@@ -459,6 +473,7 @@ export class SearchService {
       {
         query: suggestedQuery,
         categories,
+        categoryIds,
         minPrice,
         maxPrice,
         status,
@@ -534,6 +549,7 @@ export class SearchService {
 
   async countProductsByFilters(filters: {
     categories?: string[];
+    categoryIds?: number[];
     minPrice?: number;
     maxPrice?: number;
     status?: string;
@@ -562,6 +578,14 @@ export class SearchService {
           },
         });
       }
+    }
+
+    if (filters.categoryIds && filters.categoryIds.length > 0) {
+      filter.push({
+        terms: {
+          'category.id': filters.categoryIds,
+        },
+      });
     }
 
     if (filters.categoryId !== undefined) {

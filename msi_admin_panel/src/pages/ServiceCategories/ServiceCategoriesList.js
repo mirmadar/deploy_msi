@@ -188,7 +188,10 @@ export const ServiceCategoriesList = () => {
   const handleFormSuccess = () => {
     handleFormClose();
     clearSelection();
-    refresh();
+    const expandedIds = Array.from(expanded);
+    refresh().then(() => {
+      expandedIds.forEach((id) => refetchChildren(id));
+    });
   };
 
   const handleMoveUp = useCallback(

@@ -1,6 +1,8 @@
 import { ProductStatus, ProductUnit } from '@prisma/client';
-import { IsArray, IsEnum, IsBoolean, IsString, IsNumber, IsOptional, ValidateNested } from 'class-validator';
+import { IsArray, IsEnum, IsBoolean, IsString, IsNumber, IsOptional, ValidateNested, ArrayMaxSize, Min } from 'class-validator';
 import { Type } from 'class-transformer';
+
+const MAX_CATEGORY_IDS = 200;
 
 export class ProductFiltersDto {
   @IsOptional()
@@ -31,6 +33,13 @@ export class ProductFiltersDto {
   @IsOptional()
   @IsNumber({}, { message: 'categoryId должен быть числом' })
   readonly categoryId?: number;
+
+  @IsOptional()
+  @IsArray({ message: 'categoryIds должен быть массивом' })
+  @IsNumber({}, { each: true, message: 'Каждый элемент categoryIds должен быть числом' })
+  @Min(1, { each: true, message: 'categoryIds: каждый id должен быть ≥ 1' })
+  @ArrayMaxSize(MAX_CATEGORY_IDS, { message: `categoryIds: не более ${MAX_CATEGORY_IDS} элементов` })
+  readonly categoryIds?: number[];
 }
 
 export class BulkUpdateByFiltersDto {

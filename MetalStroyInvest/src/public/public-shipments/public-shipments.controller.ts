@@ -1,5 +1,6 @@
 import { Controller, Get, Query, NotFoundException } from '@nestjs/common';
 import { PublicShipmentsService } from './public-shipments.service';
+import { parsePagination } from 'src/shared/common/utils/query-parser.util';
 
 @Controller('public/:citySlug/shipments')
 export class PublicShipmentsController {
@@ -17,8 +18,7 @@ export class PublicShipmentsController {
     @Query('pageSize') pageSize = '20',
     @Query('categorySlug') categorySlug?: string,
   ) {
-    const pageNumber = parseInt(page || '1', 10);
-    const pageSizeNumber = parseInt(pageSize || '20', 10);
+    const { page: pageNumber, pageSize: pageSizeNumber } = parsePagination(page, pageSize);
 
     if (categorySlug?.trim()) {
       const result = await this.shipmentsService.getShipmentPostsByCategory(

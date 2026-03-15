@@ -28,6 +28,40 @@ export function parseCategories(
   return categoriesArray;
 }
 
+const MAX_CATEGORY_IDS = 200;
+
+/** Парсит categoryIds из query: categoryIds=1,2,3 или categoryIds[]=1&categoryIds[]=2. Ограничивает количество id и только положительные целые. */
+export function parseCategoryIds(
+  categoryIds: string | string[] | undefined,
+  rawQuery?: Request['query'],
+): number[] | undefined {
+  let ids: number[] = [];
+  const fromArray = rawQuery?.['categoryIds[]'];
+  if (fromArray !== undefined) {
+    const arr = Array.isArray(fromArray) ? fromArray : [fromArray];
+    ids = arr
+      .map((v) => parseInt(String(v).trim(), 10))
+      .filter((n) => !Number.isNaN(n) && n > 0);
+  } else if (categoryIds !== undefined) {
+    if (Array.isArray(categoryIds)) {
+      ids = categoryIds
+        .map((v) => parseInt(String(v).trim(), 10))
+        .filter((n) => !Number.isNaN(n) && n > 0);
+    } else {
+      const str = typeof categoryIds === 'string' ? categoryIds : '';
+      if (str) {
+        ids = str
+          .split(',')
+          .map((s) => parseInt(s.trim(), 10))
+          .filter((n) => !Number.isNaN(n) && n > 0);
+      }
+    }
+  }
+  if (ids.length === 0) return undefined;
+  if (ids.length > MAX_CATEGORY_IDS) ids = ids.slice(0, MAX_CATEGORY_IDS);
+  return ids;
+}
+
 export function parsePrice(priceStr: string | undefined): number | undefined {
   if (!priceStr) return undefined;
   const price = parseFloat(priceStr);
@@ -39,7 +73,8 @@ export function parseBoolean(boolStr: string | undefined): boolean | undefined {
   return boolStr === 'true' || boolStr === '1';
 }
 
-const MAX_PAGE = 1000;
+/** Макс. номер страницы (при pageSize=100 даёт доступ до 1M записей). Защита от огромного skip в БД. */
+const MAX_PAGE = 10000;
 const MAX_PAGE_SIZE = 100;
 const DEFAULT_PAGE_SIZE = 20;
 

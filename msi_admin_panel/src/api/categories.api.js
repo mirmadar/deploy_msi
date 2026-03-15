@@ -22,6 +22,9 @@ export const CategoriesApi = {
   // Получить дерево категорий (все сразу, для обратной совместимости)
   getTree: () => http.get("/admin/categories/tree"),
 
+  // Дерево категорий с количеством товаров в ветке для фильтра товаров
+  getTreeForFilters: () => http.get("/admin/categories/tree-for-filters"),
+
   // Получить дочерние категории для конкретной категории
   getChildren: (parentId, params) =>
     http.get("/admin/categories", {

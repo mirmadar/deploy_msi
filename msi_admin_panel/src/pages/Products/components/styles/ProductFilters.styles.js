@@ -94,30 +94,7 @@ export const styles = {
   },
   treeView: {
     width: "100%",
-    maxHeight: 400,
-    overflowY: "auto",
-    "& .MuiTreeItem-root": {
-      "& .MuiTreeItem-content": {
-        padding: "4px 8px",
-        borderRadius: 1,
-        "&:hover": {
-          bgcolor: "action.hover",
-        },
-      },
-      "& .MuiTreeItem-label": {
-        width: "100%",
-      },
-    },
-    "&::-webkit-scrollbar": {
-      width: "6px",
-    },
-    "&::-webkit-scrollbar-track": {
-      background: "transparent",
-    },
-    "&::-webkit-scrollbar-thumb": {
-      background: "rgba(0,0,0,0.2)",
-      borderRadius: "3px",
-    },
+    minHeight: 0,
   },
   checkboxContainer: {
     display: "flex",
@@ -151,16 +128,39 @@ export const styles = {
     color: "text.secondary",
   },
   categoriesList: {
-    maxHeight: 400,
+    maxHeight: 420,
     overflowY: "auto",
+    overflowX: "hidden",
     border: "1px solid",
     borderColor: "divider",
     borderRadius: 1,
     p: 1,
+    "&::-webkit-scrollbar": {
+      width: "6px",
+    },
+    "&::-webkit-scrollbar-track": {
+      background: "transparent",
+    },
+    "&::-webkit-scrollbar-thumb": {
+      background: "rgba(0,0,0,0.2)",
+      borderRadius: "3px",
+    },
   },
   noResults: {
     p: 2,
     textAlign: "center",
+  },
+  treeNodeRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 0,
+    py: 0.25,
+    px: 0.5,
+    borderRadius: 1,
+    cursor: "pointer",
+    "&:hover": {
+      bgcolor: "action.hover",
+    },
   },
   categoryItem: {
     display: "flex",

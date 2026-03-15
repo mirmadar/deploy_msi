@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { PublicArticlesService } from './public-articles.service';
+import { parsePagination } from 'src/shared/common/utils/query-parser.util';
 
 @Controller('public/:citySlug/articles')
 export class ArticlesController {
@@ -10,9 +11,7 @@ export class ArticlesController {
     @Query('page') page = '1',
     @Query('pageSize') pageSize = '10',
   ) {
-    const pageNumber = parseInt(page || '1', 10);
-    const pageSizeNumber = parseInt(pageSize || '10', 10);
-
+    const { page: pageNumber, pageSize: pageSizeNumber } = parsePagination(page, pageSize);
     return this.articlesService.getAllPublishedArticles(pageNumber, pageSizeNumber);
   }
 
