@@ -2,7 +2,7 @@
 
 import { useState, FormEvent, ChangeEvent, use } from 'react';
 import { ActionButton } from './ui/ActionButton';
-import { ROUTES } from '@/lib/constants';
+import { ROUTES, CONSENT_PERSONAL_DATA_PDF_URL } from '@/lib/constants';
 import { getErrorMessage } from '@/lib/api';
 import { useCitySlug } from './cities/CityProvider';
 
@@ -186,7 +186,9 @@ export default function RequestForm({ onSubmit, buttonColor = 'var(--color-green
         }}
       >
         Нажимая на кнопку «Заказать звонок», Вы даете <a
-          href={ROUTES.PRIVACY(citySlug)}
+          href={CONSENT_PERSONAL_DATA_PDF_URL}
+          target="_blank"
+          rel="noopener noreferrer"
           className="small"
         >Согласие на обработку данных</a> и соглашаетесь с <a
           href={ROUTES.PRIVACY(citySlug)}

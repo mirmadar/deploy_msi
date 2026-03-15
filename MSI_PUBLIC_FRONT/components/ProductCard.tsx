@@ -3,6 +3,7 @@
 import { Product } from '@/types/api';
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
+import { formatUnit } from '@/lib/units';
 import AddToCartButton from './AddToCartButton';
 import { QuantityControl } from './ui/QuantityControl';
 import { useState } from 'react';
@@ -21,7 +22,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   if (!slug) return null;
 
   const imageUrl = product.imageUrl || product.image;
-  const priceUnit = product.priceUnit || 'шт';
+  const priceUnit = formatUnit(product.unit ?? product.priceUnit);
   const isOutOfStock = product.status === 'OUT_OF_STOCK';
 
   const { cart, updateQuantity } = useCart();

@@ -7,6 +7,7 @@ import { Product } from '@/types/api';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
+import { formatUnit } from '@/lib/units';
 import AddToCartButton from '@/components/AddToCartButton';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useCitySlug } from '@/components/cities/CityProvider';
@@ -156,7 +157,7 @@ export default function ProductPage() {
   }
 
   const imageUrl = product.imageUrl || product.image;
-  const priceUnit = product.priceUnit || 'шт';
+  const priceUnit = formatUnit(product.unit ?? product.priceUnit);
   const isOutOfStock = product.status === 'OUT_OF_STOCK';
   const isNew = product.isNew;
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { ROUTES } from '@/lib/constants';
+import { ROUTES, CONSENT_PERSONAL_DATA_PDF_URL } from '@/lib/constants';
 import Image from 'next/image';
 import { useCitySlug } from './cities/CityProvider';
 
@@ -55,6 +55,9 @@ export default function Footer() {
           <div className="flex flex-col md:flex-row gap-2 md:gap-6 mb-5">
             <a href={ROUTES.PRIVACY(citySlug)} className="text-white/90 underline decoration-white/50">
               Пользовательское соглашение
+            </a>
+            <a href={CONSENT_PERSONAL_DATA_PDF_URL} target="_blank" rel="noopener noreferrer" className="text-white/90 underline decoration-white/50">
+              Согласие на обработку персональных данных
             </a>
             <a href={ROUTES.PRIVACY(citySlug)} className="text-white/90 underline decoration-white/50">
               Политика конфиденциальности
