@@ -236,13 +236,17 @@ export const ServiceCategoriesList = () => {
   );
 
   const handleBulkMoveSuccess = () => {
+    const expandedIds = Array.from(expanded);
     clearSelection();
-    refresh();
     setBulkMoveModalOpen(false);
+    refresh().then(() => {
+      expandedIds.forEach((id) => refetchChildren(id));
+    });
   };
 
   const handleBulkDeleteConfirm = async () => {
     if (selectedCategories.length === 0) return;
+    const expandedIds = Array.from(expanded);
     setIsBulkDeleting(true);
     try {
       await ServiceCategoriesApi.bulkRemove({
@@ -250,7 +254,9 @@ export const ServiceCategoriesList = () => {
       });
       setBulkDeleteDialogOpen(false);
       clearSelection();
-      refresh();
+      refresh().then(() => {
+        expandedIds.forEach((id) => refetchChildren(id));
+      });
     } catch (err) {
       console.error(err);
       setDeleteError(

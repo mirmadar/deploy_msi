@@ -22,9 +22,6 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "populate:filters": "ts-node -r tsconfig-paths/register scripts/populate-category-filters.ts",
-    "clear:filters": "ts-node -r tsconfig-paths/register scripts/clear-category-filters.ts",
-    "find:skipped": "ts-node -r tsconfig-paths/register scripts/find-skipped-categories.ts",
-    "populate:slugs": "ts-node -r tsconfig-paths/register scripts/populate-product-slugs.ts",
     "reindex": "node -r ts-node/register -r tsconfig-paths/register scripts/reindex-elasticsearch.ts"
   },
   "dependencies": {

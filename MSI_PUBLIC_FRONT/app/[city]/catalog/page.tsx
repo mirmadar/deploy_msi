@@ -61,13 +61,7 @@ export default function CatalogPage() {
           />
 
           {categories.length > 0 ? (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                gap: 20,
-              }}
-            >
+            <div className="catalog-categories-grid">
               {categories.map(category => (
                 <CategoryCard
                   key={category.categoryId || category.id}

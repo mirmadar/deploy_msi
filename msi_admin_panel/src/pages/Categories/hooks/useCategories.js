@@ -113,10 +113,10 @@ export const useCategories = (initialPage = 0, initialRowsPerPage = 25) => {
     setPage(0);
   };
 
-  const refresh = () => {
+  const refresh = useCallback(() => {
     setChildrenCache({});
-    fetchCategories();
-  };
+    return fetchCategories();
+  }, [fetchCategories]);
 
   return {
     categories,

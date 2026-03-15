@@ -53,9 +53,13 @@ export default function CityProvider({
 
       const slug = pathname.split('/')[1];
       const found = list.find(c => c.slug === slug);
+      const hasCityCookie = typeof document !== 'undefined' && document.cookie.includes('citySlug=');
 
       if (found) {
-        setCity(found);
+        setCityState(found);
+        if (!hasCityCookie) {
+          setModalOpen(true);
+        }
       } else {
         setModalOpen(true);
       }

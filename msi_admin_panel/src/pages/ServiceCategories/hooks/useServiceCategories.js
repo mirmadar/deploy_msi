@@ -101,10 +101,10 @@ export const useServiceCategories = (
     setPage(0);
   };
 
-  const refresh = () => {
+  const refresh = useCallback(() => {
     setChildrenCache({});
-    fetchCategories();
-  };
+    return fetchCategories();
+  }, [fetchCategories]);
 
   // Только перезапросить корневой список, не трогая кэш детей (после смены порядка)
   const refreshRootOnly = useCallback(() => {

@@ -224,13 +224,19 @@ export const CategoriesList = () => {
   };
 
   const handleBulkMoveSuccess = () => {
+    const expandedIds = Array.from(expanded);
     clearSelection();
-    refresh();
+    refresh().then(() => {
+      expandedIds.forEach((id) => refetchChildren(id));
+    });
   };
 
   const handleBulkImageUrlSuccess = () => {
+    const expandedIds = Array.from(expanded);
     clearSelection();
-    refresh();
+    refresh().then(() => {
+      expandedIds.forEach((id) => refetchChildren(id));
+    });
   };
 
   const handleManageFilters = (categoryId, categoryName) => {

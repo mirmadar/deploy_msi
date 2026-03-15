@@ -13,11 +13,16 @@ function SearchContent() {
   const { city } = useCity();
   const citySlug = city?.slug;
   const query = searchParams.get('q') || '';
+  const pageFromUrl = searchParams.get('page');
+  const currentPageFromUrl =
+    pageFromUrl !== null && pageFromUrl !== '' && !isNaN(Number(pageFromUrl)) && Number(pageFromUrl) >= 1
+      ? Number(pageFromUrl)
+      : 1;
 
   const [results, setResults] = useState<PaginatedResponse<Product> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(currentPageFromUrl);
   const itemsPerPage = 20;
 
   const minPriceFromUrl = searchParams.get('minPrice');
@@ -30,6 +35,11 @@ function SearchContent() {
     maxPriceFromUrl !== null && maxPriceFromUrl !== '' && !isNaN(Number(maxPriceFromUrl))
       ? Number(maxPriceFromUrl)
       : undefined;
+
+  // Синхронизируем текущую страницу с URL (при навигации по истории или после обновления страницы)
+  useEffect(() => {
+    setCurrentPage(currentPageFromUrl);
+  }, [currentPageFromUrl]);
 
   const [inputMinPrice, setInputMinPrice] = useState<string>(
     minPriceFromUrl ?? ''
@@ -46,13 +56,12 @@ function SearchContent() {
   useEffect(() => {
     if (!citySlug) return;
     if (query) {
-      setCurrentPage(1);
-      performSearch(query, 1, appliedMinPrice, appliedMaxPrice);
+      performSearch(query, currentPageFromUrl, appliedMinPrice, appliedMaxPrice);
     } else {
       setResults(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, citySlug, minPriceFromUrl, maxPriceFromUrl]);
+  }, [query, citySlug, currentPageFromUrl, minPriceFromUrl, maxPriceFromUrl]);
 
   const performSearch = async (
     searchQuery: string,
@@ -110,6 +119,7 @@ function SearchContent() {
     if (!suggested.trim() || !citySlug) return;
     const params = new URLSearchParams(searchParams.toString());
     params.set('q', suggested);
+    params.set('page', '1');
     router.replace(`?${params.toString()}`);
     setCurrentPage(1);
     performSearch(suggested, 1);
@@ -117,6 +127,9 @@ function SearchContent() {
 
   const handlePageChange = (page: number) => {
     if (query) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('page', String(page));
+      router.replace(`?${params.toString()}`);
       setCurrentPage(page);
       performSearch(query, page, appliedMinPrice, appliedMaxPrice);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -326,6 +339,12 @@ function SearchContent() {
             </div>
           )}
         </>
+      )}
+
+      {query && !citySlug && (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-gray-600">Загрузка...</div>
+        </div>
       )}
 
       {!loading && !error && !query && (

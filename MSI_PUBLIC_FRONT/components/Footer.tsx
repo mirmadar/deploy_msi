@@ -1,12 +1,10 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
 import Image from 'next/image';
 import { useCitySlug } from './cities/CityProvider';
 
 export default function Footer() {
-  const router = useRouter();
   const citySlug = useCitySlug();
 
   return (
@@ -73,12 +71,6 @@ export default function Footer() {
           {/* Copyright */}
           <div className="flex flex-col md:flex-row justify-between items-center text-white/70 text-xs gap-2">
             <div>&copy; {new Date().getFullYear()} МеталлСтройИнвест. Все права защищены.</div>
-            <a
-              href="https://t.me/ginssseng"
-              className="underline decoration-white/50"
-            >
-              Сайт сделан командой mirea_friends
-            </a>
           </div>
         </div>
       </div>

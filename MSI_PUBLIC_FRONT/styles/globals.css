@@ -525,14 +525,36 @@ input[type="number"] {
     order: 4;
   }
 
-  .category-card{
-  padding: 8px 8px 16px;
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  justify-self: flex-start;
-  align-items: center;
-  height: auto;
+  .category-card {
+    padding: 8px 8px 16px;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    justify-content: flex-start;
+    align-items: center;
+    height: auto;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
+  }
+
+  .category-card p {
+    flex: 0 1 auto;
+    text-align: left;
+  }
+}
+
+/* Каталог: на мобильном — одна колонка на всю ширину */
+.catalog-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .catalog-categories-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 }
 

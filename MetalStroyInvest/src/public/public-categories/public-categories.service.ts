@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { ProductStatus } from '@prisma/client';
 import { PrismaService } from 'src/shared/prisma/prisma.service';
 
 export interface PublicCategoryPathItem {
@@ -134,8 +135,31 @@ export class PublicCategoriesService {
       orderBy: { displayOrder: 'asc' },
     });
 
-    // Возвращаем только структуру фильтров без значений
-    return filters.map((filter) => ({
+    // Оставляем только фильтры, у которых есть хотя бы два разных значения у неархивных товаров
+    const groupedByCharAndValue = await this.prisma.productCharacteristic.groupBy({
+      by: ['characteristicNameId', 'value'],
+      where: {
+        product: {
+          categoryId: category.categoryId,
+          status: { not: ProductStatus.ARCHIVE },
+        },
+      },
+    });
+    const distinctValueCountByCharId = new Map<number, number>();
+    for (const row of groupedByCharAndValue) {
+      const count = distinctValueCountByCharId.get(row.characteristicNameId) ?? 0;
+      distinctValueCountByCharId.set(row.characteristicNameId, count + 1);
+    }
+    const idsWithAtLeastTwoValues = new Set(
+      [...distinctValueCountByCharId.entries()]
+        .filter(([, count]) => count >= 2)
+        .map(([id]) => id),
+    );
+    const filtersWithValues = filters.filter((f) =>
+      idsWithAtLeastTwoValues.has(f.characteristicName.characteristicNameId),
+    );
+
+    return filtersWithValues.map((filter) => ({
       characteristicNameId: filter.characteristicName.characteristicNameId,
       name: filter.characteristicName.name,
       valueType: filter.characteristicName.valueType,
@@ -172,6 +196,7 @@ export class PublicCategoriesService {
         characteristicNameId,
         product: {
           categoryId: category.categoryId,
+          status: { not: ProductStatus.ARCHIVE },
         },
       },
       orderBy: {

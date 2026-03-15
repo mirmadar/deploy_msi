@@ -2,7 +2,7 @@
 
 import { useState, FormEvent, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
 import CartButton from './CartButton';
 import CartDrawer from './CartDrawer';
@@ -25,13 +25,24 @@ export default function Header({ phone, cityName, citySlug, onCityClick }: Heade
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Синхронизируем поле поиска с URL — после обновления страницы или перехода по ссылке запрос не теряется
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (pathname && pathname.endsWith('/search') && citySlug) {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('q');
+      setSearchQuery(q ? decodeURIComponent(q) : '');
+    }
+  }, [pathname, citySlug]);
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim() && citySlug) {
       router.push(`/${citySlug}/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery('');
+      // Не очищаем поле — на странице поиска значение подтянется из URL
     }
   };
 
@@ -235,7 +246,7 @@ export default function Header({ phone, cityName, citySlug, onCityClick }: Heade
               </a>
             </div>
 
-            <button onClick={onCityClick} className="flex items-center gap-2 px-2 py-1 border rounded-lg border-transparent bg-[var(--color-light-gray)] hover:bg-[var(--color-light-blue)] transition-colors">
+            <button type="button" onClick={onCityClick} className="flex items-center gap-2 px-2 py-1 border rounded-lg border-transparent bg-[var(--color-light-gray)] hover:bg-[var(--color-light-blue)] transition-colors cursor-pointer">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M7.99992 1.33334C5.41992 1.33334 3.33325 3.42001 3.33325 6.00001C3.33325 9.50001 7.99992 14.6667 7.99992 14.6667C7.99992 14.6667 12.6666 9.50001 12.6666 6.00001C12.6666 3.42001 10.5799 1.33334 7.99992 1.33334ZM4.66659 6.00001C4.66659 4.16001 6.15992 2.66668 7.99992 2.66668C9.83992 2.66668 11.3333 4.16001 11.3333 6.00001C11.3333 7.92001 9.41325 10.7933 7.99992 12.5867C6.61325 10.8067 4.66659 7.90001 4.66659 6.00001Z" fill="#1E1E1E"/>
               <path d="M7.99992 7.66668C8.92039 7.66668 9.66658 6.92048 9.66658 6.00001C9.66658 5.07954 8.92039 4.33334 7.99992 4.33334C7.07944 4.33334 6.33325 5.07954 6.33325 6.00001C6.33325 6.92048 7.07944 7.66668 7.99992 7.66668Z" fill="#1E1E1E"/>
@@ -552,6 +563,7 @@ export default function Header({ phone, cityName, citySlug, onCityClick }: Heade
     >
       {/* Кнопка города */}
       <button
+        type="button"
         onClick={() => {
           onCityClick();
           setIsMobileMenuOpen(false);

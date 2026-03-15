@@ -2,10 +2,50 @@
 
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom'; // АДАПТИВ: для модалки
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { apiClient, getErrorMessage } from '@/lib/api';
-import { useSearchParams } from 'next/navigation';
 import { Category, Product, CategoryFilter, CatalogFilters, PaginatedResponse } from '@/types/api';
+
+function parseFiltersFromUrl(searchParams: URLSearchParams): { appliedFilters: CatalogFilters; page: number } {
+  const pageParam = searchParams.get('page');
+  const page = pageParam && !isNaN(Number(pageParam)) && Number(pageParam) >= 1 ? Number(pageParam) : 1;
+  const minPriceParam = searchParams.get('minPrice');
+  const maxPriceParam = searchParams.get('maxPrice');
+  const minPrice = minPriceParam && !isNaN(Number(minPriceParam)) ? Number(minPriceParam) : undefined;
+  const maxPrice = maxPriceParam && !isNaN(Number(maxPriceParam)) ? Number(maxPriceParam) : undefined;
+  let characteristics: Record<string, string[]> | undefined;
+  try {
+    const charsParam = searchParams.get('chars');
+    if (charsParam) {
+      const parsed = JSON.parse(charsParam) as Record<string, string[]>;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        characteristics = parsed;
+      }
+    }
+  } catch {
+    // ignore invalid JSON
+  }
+  return {
+    appliedFilters: {
+      ...(minPrice !== undefined && { minPrice }),
+      ...(maxPrice !== undefined && { maxPrice }),
+      ...(characteristics && Object.keys(characteristics).length > 0 && { characteristics }),
+    },
+    page,
+  };
+}
+
+function buildUrlFromFilters(appliedFilters: CatalogFilters, page: number): string {
+  const params = new URLSearchParams();
+  if (page > 1) params.set('page', String(page));
+  if (appliedFilters.minPrice !== undefined) params.set('minPrice', String(appliedFilters.minPrice));
+  if (appliedFilters.maxPrice !== undefined) params.set('maxPrice', String(appliedFilters.maxPrice));
+  if (appliedFilters.characteristics && Object.keys(appliedFilters.characteristics).length > 0) {
+    params.set('chars', JSON.stringify(appliedFilters.characteristics));
+  }
+  const q = params.toString();
+  return q ? `?${q}` : '';
+}
 import CategoryCard from '@/components/CategoryCard';
 import ProductCard from '@/components/ProductCard';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -31,6 +71,8 @@ function useMediaQuery(query: string): boolean {
 
 export default function CategoryPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const categorySlug = params.slug as string;
   const citySlug = useCitySlug();
 
@@ -44,9 +86,10 @@ export default function CategoryPage() {
     { id: number; name: string; slug?: string | null }[]
   >([]);
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const parsedFromUrl = useMemo(() => parseFiltersFromUrl(searchParams), [searchParams]);
+  const [currentPage, setCurrentPage] = useState(parsedFromUrl.page);
   const [pageSize] = useState(20);
-  const [appliedFilters, setAppliedFilters] = useState<CatalogFilters>({});
+  const [appliedFilters, setAppliedFilters] = useState<CatalogFilters>(parsedFromUrl.appliedFilters);
 
   // АДАПТИВ: состояние модалки фильтров на мобильном
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -193,6 +236,30 @@ export default function CategoryPage() {
     setAppliedFilters({});
     setCurrentPage(1);
   };
+
+  // При смене категории подставляем в state параметры из URL (при переходе в другую категорию или после F5)
+  const prevCategorySlugRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (prevCategorySlugRef.current !== categorySlug) {
+      prevCategorySlugRef.current = categorySlug;
+      setAppliedFilters(parsedFromUrl.appliedFilters);
+      setCurrentPage(parsedFromUrl.page);
+    }
+  }, [categorySlug, parsedFromUrl]);
+
+  // Пишем фильтры и страницу в URL, чтобы при обновлении страницы они восстанавливались
+  const prevFiltersKeyRef = useRef<string>('');
+  useEffect(() => {
+    const key = JSON.stringify({ ...appliedFilters, page: currentPage });
+    if (prevFiltersKeyRef.current === key) return;
+    prevFiltersKeyRef.current = key;
+    const newQuery = buildUrlFromFilters(appliedFilters, currentPage);
+    const currentQuery = searchParams.toString();
+    const currentFull = currentQuery ? `?${currentQuery}` : '';
+    if (newQuery !== currentFull) {
+      router.replace(newQuery, { scroll: false });
+    }
+  }, [appliedFilters, currentPage, router, searchParams]);
 
   // Загружаем данные категории при изменении categorySlug
   useEffect(() => {
