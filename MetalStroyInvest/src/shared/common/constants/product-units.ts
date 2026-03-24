@@ -4,7 +4,7 @@ export const PRODUCT_UNIT_LABELS: Partial<Record<ProductUnit, string>> = {
   PG_M: 'пг.м.',
   T: 'т',
   KG: 'кг',
-  GR: 'гр',
+  GR: 'г',
   M: 'м',
   M2: 'м²',
   M3: 'м³',
