@@ -301,11 +301,15 @@ export class OrdersService {
       PG_M: 'Пг.м.',
       T: 'Т',
       KG: 'Кг',
+      GR: 'Г',
       M: 'М',
       M2: 'М²',
       M3: 'М³',
       SHT: 'Шт',
       UP: 'Уп',
+      SECTION: 'Секция',
+      ROLL: 'Рулон',
+      BUKHTA: 'Бухта',
     };
     return unitMap[unit] || unit;
   }

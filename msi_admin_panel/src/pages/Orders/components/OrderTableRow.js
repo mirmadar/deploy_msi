@@ -48,7 +48,7 @@ export const OrderTableRow = ({
           </Typography>
         </Box>
       </TableCell>
-      <TableCell sx={styles.contactCell}>
+      <TableCell sx={{ ...styles.contactCell, display: { xs: "none", md: "table-cell" } }}>
         <Box sx={styles.cellContent}>
           <Typography variant="body2" sx={styles.contactText}>
             {order.clientEmail || "—"}
@@ -107,7 +107,7 @@ export const OrderTableRow = ({
           )}
         </Box>
       </TableCell>
-      <TableCell sx={styles.dateCell}>
+      <TableCell sx={{ ...styles.dateCell, display: { xs: "none", lg: "table-cell" } }}>
         <Box sx={styles.cellContent}>
           <Typography variant="body2" sx={styles.dateText}>
             {formatDate(order.createdAt)}

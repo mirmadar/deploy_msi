@@ -15,6 +15,8 @@ import {
   TableRow,
   IconButton,
   Tooltip,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -27,6 +29,8 @@ import { useUsers } from "./hooks/useUsers";
 import { styles } from "./styles/UsersList.styles";
 
 export const UsersList = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [editingId, setEditingId] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
   const [error, setError] = useState(null);
@@ -133,98 +137,145 @@ export const UsersList = () => {
         </Box>
       ) : (
         <Box sx={styles.tableContainer}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={styles.tableHeaderRow}>
-                  <TableCell sx={styles.idHeaderCell}>
-                    <Typography variant="subtitle2">ID</Typography>
-                  </TableCell>
-                  <TableCell sx={styles.headerCell}>
-                    <Typography variant="subtitle2">Email</Typography>
-                  </TableCell>
-                  <TableCell sx={styles.headerCell}>
-                    <Typography variant="subtitle2">Имя пользователя</Typography>
-                  </TableCell>
-                  <TableCell sx={styles.headerCell}>
-                    <Typography variant="subtitle2">Роли</Typography>
-                  </TableCell>
-                  <TableCell sx={styles.actionsHeaderCell}>
-                    <Typography variant="subtitle2">Действия</Typography>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.userId} hover sx={styles.tableRow}>
-                    <TableCell sx={styles.idCell}>
-                      <Box sx={styles.cellContent}>
-                        <Typography variant="body2" sx={styles.idText}>
-                          #{user.userId}
-                        </Typography>
-                      </Box>
+          {isMobile ? (
+            <Box sx={styles.mobileList}>
+              {users.map((user) => (
+                <Box key={user.userId} sx={styles.mobileCard}>
+                  <Box sx={styles.mobileHeader}>
+                    <Typography sx={styles.mobileName}>{user.username}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      #{user.userId}
+                    </Typography>
+                  </Box>
+                  <Typography sx={styles.mobileMeta}>{user.email}</Typography>
+                  <Box sx={styles.rolesContainer}>
+                    {user.roles && user.roles.length > 0 ? (
+                      user.roles.map((role, index) => (
+                        <Chip key={index} label={role.value} size="small" sx={styles.roleChip} />
+                      ))
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        Нет ролей
+                      </Typography>
+                    )}
+                  </Box>
+                  <Box sx={styles.mobileActions}>
+                    <Tooltip title="Редактировать" arrow>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEdit(user.userId)}
+                        sx={styles.editButton}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Удалить" arrow>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeleteClick(user)}
+                        sx={styles.deleteButton}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          ) : (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={styles.tableHeaderRow}>
+                    <TableCell sx={styles.idHeaderCell}>
+                      <Typography variant="subtitle2">ID</Typography>
                     </TableCell>
-                    <TableCell sx={styles.dataCell}>
-                      <Box sx={styles.cellContent}>
-                        <Typography variant="body2" sx={styles.dataText}>
-                          {user.email}
-                        </Typography>
-                      </Box>
+                    <TableCell sx={styles.headerCell}>
+                      <Typography variant="subtitle2">Email</Typography>
                     </TableCell>
-                    <TableCell sx={styles.dataCell}>
-                      <Box sx={styles.cellContent}>
-                        <Typography variant="body2" sx={styles.dataText}>
-                          {user.username}
-                        </Typography>
-                      </Box>
+                    <TableCell sx={styles.headerCell}>
+                      <Typography variant="subtitle2">Имя пользователя</Typography>
                     </TableCell>
-                    <TableCell sx={styles.dataCell}>
-                      <Box sx={styles.cellContent}>
-                        {user.roles && user.roles.length > 0 ? (
-                          <Box sx={styles.rolesContainer}>
-                            {user.roles.map((role, index) => (
-                              <Chip
-                                key={index}
-                                label={role.value}
-                                size="small"
-                                sx={styles.roleChip}
-                              />
-                            ))}
-                          </Box>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            Нет ролей
-                          </Typography>
-                        )}
-                      </Box>
+                    <TableCell sx={styles.headerCell}>
+                      <Typography variant="subtitle2">Роли</Typography>
                     </TableCell>
-                    <TableCell sx={styles.actionsCell}>
-                      <Box sx={styles.cellContent}>
-                        <Tooltip title="Редактировать" arrow>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEdit(user.userId)}
-                            sx={styles.editButton}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Удалить" arrow>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDeleteClick(user)}
-                            sx={styles.deleteButton}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
+                    <TableCell sx={styles.actionsHeaderCell}>
+                      <Typography variant="subtitle2">Действия</Typography>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.userId} hover sx={styles.tableRow}>
+                      <TableCell sx={styles.idCell}>
+                        <Box sx={styles.cellContent}>
+                          <Typography variant="body2" sx={styles.idText}>
+                            #{user.userId}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={styles.dataCell}>
+                        <Box sx={styles.cellContent}>
+                          <Typography variant="body2" sx={styles.dataText}>
+                            {user.email}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={styles.dataCell}>
+                        <Box sx={styles.cellContent}>
+                          <Typography variant="body2" sx={styles.dataText}>
+                            {user.username}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={styles.dataCell}>
+                        <Box sx={styles.cellContent}>
+                          {user.roles && user.roles.length > 0 ? (
+                            <Box sx={styles.rolesContainer}>
+                              {user.roles.map((role, index) => (
+                                <Chip
+                                  key={index}
+                                  label={role.value}
+                                  size="small"
+                                  sx={styles.roleChip}
+                                />
+                              ))}
+                            </Box>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">
+                              Нет ролей
+                            </Typography>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={styles.actionsCell}>
+                        <Box sx={styles.cellContent}>
+                          <Tooltip title="Редактировать" arrow>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleEdit(user.userId)}
+                              sx={styles.editButton}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Удалить" arrow>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDeleteClick(user)}
+                              sx={styles.deleteButton}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </Box>
       )}
 

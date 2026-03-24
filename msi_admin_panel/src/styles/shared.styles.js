@@ -3,10 +3,10 @@ export const sharedStyles = {
   // Основной контейнер страницы
   pagePaper: {
     p: { xs: 1.5, sm: 2, md: 2.5 },
-    borderRadius: 3,
+    borderRadius: { xs: 0, sm: 3 },
     bgcolor: "background.paper",
     width: "100%",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+    boxShadow: { xs: "none", sm: "0 2px 8px rgba(0,0,0,0.08)" },
   },
 
   // Заголовок страницы
@@ -44,17 +44,17 @@ export const sharedStyles = {
 
   // Контейнер с рамкой (для таблиц, списков)
   borderedContainer: {
-    borderRadius: 2,
-    border: "1px solid",
-    borderColor: "divider",
+    borderRadius: { xs: 0, sm: 2 },
+    border: { xs: "none", sm: "1px solid" },
+    borderColor: { xs: "transparent", sm: "grey.300" },
   },
 
   // Диалог (модальное окно)
   dialogPaper: {
     borderRadius: 3,
-    maxWidth: "30vw",
-    width: "30vw",
-    m: 2,
+    width: { xs: "100%", sm: "90vw", md: "70vw", lg: "30vw" },
+    maxWidth: { xs: "100%", sm: "90vw", md: "70vw", lg: "30vw" },
+    m: { xs: 1, sm: 2 },
     overflow: "hidden",
     display: "flex",
     flexDirection: "column",

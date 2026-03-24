@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -6,6 +6,12 @@ import {
   Tooltip,
   CircularProgress,
   Checkbox,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   KeyboardArrowRight as KeyboardArrowRightIcon,
@@ -14,6 +20,7 @@ import {
   Delete as DeleteIcon,
   ArrowUpward as ArrowUpwardIcon,
   ArrowDownward as ArrowDownwardIcon,
+  MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
 import { styles } from "./styles/ServiceCategoryTreeNode.styles";
 
@@ -38,6 +45,9 @@ export const ServiceCategoryTreeNode = ({
   selectedCategories = [],
   onSelect,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [moreAnchorEl, setMoreAnchorEl] = useState(null);
   const nodeId = node.id ?? node.serviceCategoryId;
   const isExpanded = expanded.has(nodeId);
   const hasChildren = node.hasChildren === true;
@@ -55,6 +65,19 @@ export const ServiceCategoryTreeNode = ({
 
   const isLoadingChildren = loadingChildren[nodeId];
   const isSelected = selectedCategories.includes(nodeId);
+  const isMoreOpen = Boolean(moreAnchorEl);
+
+  const openMoreMenu = (event) => {
+    event.stopPropagation();
+    setMoreAnchorEl(event.currentTarget);
+  };
+
+  const closeMoreMenu = () => setMoreAnchorEl(null);
+
+  const runActionAndClose = (action) => {
+    action?.();
+    closeMoreMenu();
+  };
 
   return (
     <Box>
@@ -68,11 +91,13 @@ export const ServiceCategoryTreeNode = ({
             onClick={(e) => e.stopPropagation()}
           />
 
-          <Box sx={styles.idCell}>
-            <Typography variant="body2" sx={styles.idText}>
-              #{nodeId}
-            </Typography>
-          </Box>
+          {!isMobile && (
+            <Box sx={styles.idCell}>
+              <Typography variant="body2" sx={styles.idText}>
+                #{nodeId}
+              </Typography>
+            </Box>
+          )}
 
           <Box sx={styles.indent(level)} />
 
@@ -93,36 +118,19 @@ export const ServiceCategoryTreeNode = ({
             <Box sx={styles.expandPlaceholder} />
           )}
 
-          <Typography variant="body2" sx={styles.categoryName}>
-            {node.name}
-          </Typography>
+          <Box sx={styles.titleBlock}>
+            <Typography variant="body2" sx={styles.categoryName}>
+              {node.name}
+            </Typography>
+            {isMobile && (
+              <Typography variant="caption" sx={styles.mobileIdText}>
+                #{nodeId}
+              </Typography>
+            )}
+          </Box>
         </Box>
 
         <Box sx={styles.actions}>
-          <Tooltip title="Выше в списке" arrow>
-            <span>
-              <IconButton
-                size="small"
-                onClick={() => onMoveUp?.(nodeId, parentId)}
-                disabled={!canMoveUp}
-                sx={styles.moveButton}
-              >
-                <ArrowUpwardIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip title="Ниже в списке" arrow>
-            <span>
-              <IconButton
-                size="small"
-                onClick={() => onMoveDown?.(nodeId, parentId)}
-                disabled={!canMoveDown}
-                sx={styles.moveButton}
-              >
-                <ArrowDownwardIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
           <Tooltip title="Редактировать" arrow>
             <IconButton
               size="small"
@@ -132,15 +140,72 @@ export const ServiceCategoryTreeNode = ({
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Удалить" arrow>
-            <IconButton
-              size="small"
-              onClick={() => onDelete(nodeId)}
-              sx={styles.deleteButton}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+
+          {isMobile ? (
+            <>
+              <Tooltip title="Еще действия" arrow>
+                <IconButton size="small" onClick={openMoreMenu}>
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Menu anchorEl={moreAnchorEl} open={isMoreOpen} onClose={closeMoreMenu}>
+                <MenuItem disabled={!canMoveUp} onClick={() => runActionAndClose(() => onMoveUp?.(nodeId, parentId))}>
+                  <ListItemIcon>
+                    <ArrowUpwardIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>Выше в списке</ListItemText>
+                </MenuItem>
+                <MenuItem disabled={!canMoveDown} onClick={() => runActionAndClose(() => onMoveDown?.(nodeId, parentId))}>
+                  <ListItemIcon>
+                    <ArrowDownwardIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>Ниже в списке</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={() => runActionAndClose(() => onDelete(nodeId))}>
+                  <ListItemIcon>
+                    <DeleteIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>Удалить</ListItemText>
+                </MenuItem>
+              </Menu>
+            </>
+          ) : (
+            <>
+              <Tooltip title="Выше в списке" arrow>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => onMoveUp?.(nodeId, parentId)}
+                    disabled={!canMoveUp}
+                    sx={styles.moveButton}
+                  >
+                    <ArrowUpwardIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Ниже в списке" arrow>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => onMoveDown?.(nodeId, parentId)}
+                    disabled={!canMoveDown}
+                    sx={styles.moveButton}
+                  >
+                    <ArrowDownwardIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Удалить" arrow>
+                <IconButton
+                  size="small"
+                  onClick={() => onDelete(nodeId)}
+                  sx={styles.deleteButton}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
         </Box>
       </Box>
 

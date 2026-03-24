@@ -8,6 +8,8 @@ import {
   IconButton,
   Button,
   ButtonGroup,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   FirstPage as FirstPageIcon,
@@ -41,6 +43,8 @@ export const TablePagination = ({
   onRowsPerPageChange,
   rowsPerPageOptions = [10, 25, 50, 100],
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const totalPages = Math.ceil(total / rowsPerPage) || 1;
   const currentPage = page + 1; // Преобразуем из 0-based в 1-based для отображения
   const startItem = page * rowsPerPage + 1;
@@ -69,7 +73,7 @@ export const TablePagination = ({
   // Генерируем номера страниц для отображения
   const getPageNumbers = () => {
     const pages = [];
-    const maxVisiblePages = 7; // Максимальное количество видимых номеров страниц
+    const maxVisiblePages = isMobile ? 3 : 7; // На телефоне компактнее
 
     if (totalPages <= maxVisiblePages) {
       // Если страниц мало, показываем все
@@ -145,14 +149,16 @@ export const TablePagination = ({
           </Box>
 
           <Box sx={styles.pageNavigation}>
-            <IconButton
-              onClick={handleFirstPage}
-              disabled={page === 0}
-              size="small"
-              sx={styles.navButton}
-            >
-              <FirstPageIcon />
-            </IconButton>
+            {!isMobile && (
+              <IconButton
+                onClick={handleFirstPage}
+                disabled={page === 0}
+                size="small"
+                sx={styles.navButton}
+              >
+                <FirstPageIcon />
+              </IconButton>
+            )}
             <IconButton
               onClick={handlePreviousPage}
               disabled={page === 0}
@@ -192,14 +198,16 @@ export const TablePagination = ({
             >
               <ChevronRightIcon />
             </IconButton>
-            <IconButton
-              onClick={handleLastPage}
-              disabled={page >= totalPages - 1}
-              size="small"
-              sx={styles.navButton}
-            >
-              <LastPageIcon />
-            </IconButton>
+            {!isMobile && (
+              <IconButton
+                onClick={handleLastPage}
+                disabled={page >= totalPages - 1}
+                size="small"
+                sx={styles.navButton}
+              >
+                <LastPageIcon />
+              </IconButton>
+            )}
           </Box>
 
           <Typography variant="body2" sx={styles.pageInfo}>

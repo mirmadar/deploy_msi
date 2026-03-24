@@ -25,13 +25,13 @@ export const ShipmentTableHeader = ({
         <TableCell sx={styles.titleHeaderCell}>
           <Typography variant="subtitle2">Название</Typography>
         </TableCell>
-        <TableCell sx={styles.imageHeaderCell}>
+        <TableCell sx={{ ...styles.imageHeaderCell, display: { xs: "none", md: "table-cell" } }}>
           <Typography variant="subtitle2">Изображение</Typography>
         </TableCell>
-        <TableCell sx={styles.categoryHeaderCell}>
+        <TableCell sx={{ ...styles.categoryHeaderCell, display: { xs: "none", lg: "table-cell" } }}>
           <Typography variant="subtitle2">Категория</Typography>
         </TableCell>
-        <TableCell sx={styles.createdHeaderCell}>
+        <TableCell sx={{ ...styles.createdHeaderCell, display: { xs: "none", md: "table-cell" } }}>
           <Typography variant="subtitle2">Дата и время</Typography>
         </TableCell>
         <TableCell sx={styles.publishedHeaderCell}>

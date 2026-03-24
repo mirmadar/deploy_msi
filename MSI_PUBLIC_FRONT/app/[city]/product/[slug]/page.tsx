@@ -11,12 +11,14 @@ import { formatUnit } from '@/lib/units';
 import AddToCartButton from '@/components/AddToCartButton';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useCitySlug } from '@/components/cities/CityProvider';
+import { useProductUnits } from '@/hooks/useProductUnits';
 
 export default function ProductPage() {
   const params = useParams();
   const router = useRouter();
   const productSlug = params.slug as string;
   const citySlug = useCitySlug();
+  const { unitLabels } = useProductUnits(citySlug);
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -157,7 +159,7 @@ export default function ProductPage() {
   }
 
   const imageUrl = product.imageUrl || product.image;
-  const priceUnit = formatUnit(product.unit ?? product.priceUnit);
+  const priceUnit = formatUnit(product.unit ?? product.priceUnit, unitLabels);
   const isOutOfStock = product.status === 'OUT_OF_STOCK';
   const isNew = product.isNew;
 
@@ -266,7 +268,7 @@ export default function ProductPage() {
                       color: '#64748b',
                     }}
                   >
-                    за {priceUnit}
+                    / {priceUnit}
                   </div>
                 </div>
 

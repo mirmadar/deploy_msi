@@ -12,9 +12,11 @@ export const styles = {
     display: "flex",
     alignItems: "center",
     gap: 2,
+    width: { xs: "100%", sm: "auto" },
   },
   searchField: {
     width: { xs: "100%", sm: 300 },
+    flex: { xs: 1, sm: "none" },
     "& .MuiOutlinedInput-root": {
       borderRadius: 2,
     },

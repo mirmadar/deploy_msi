@@ -54,7 +54,7 @@ export const ProductTableHeader = ({
         <TableCell sx={styles.nameHeaderCell}>
           <Typography variant="subtitle2">Название</Typography>
         </TableCell>
-        <TableCell sx={styles.unitHeaderCell}>
+        <TableCell sx={{ ...styles.unitHeaderCell, display: { xs: "none", md: "table-cell" } }}>
           <Typography variant="subtitle2">Ед. изм.</Typography>
         </TableCell>
         <TableCell 
@@ -74,13 +74,13 @@ export const ProductTableHeader = ({
             )}
           </Box>
         </TableCell>
-        <TableCell sx={styles.statusHeaderCell}>
+        <TableCell sx={{ ...styles.statusHeaderCell, display: { xs: "none", md: "table-cell" } }}>
           <Typography variant="subtitle2">Статус</Typography>
         </TableCell>
-        <TableCell sx={styles.categoryHeaderCell}>
+        <TableCell sx={{ ...styles.categoryHeaderCell, display: { xs: "none", lg: "table-cell" } }}>
           <Typography variant="subtitle2">Категория</Typography>
         </TableCell>
-        <TableCell sx={styles.isNewHeaderCell}>
+        <TableCell sx={{ ...styles.isNewHeaderCell, display: { xs: "none", md: "table-cell" } }}>
           <Typography variant="subtitle2">Новинка</Typography>
         </TableCell>
         <TableCell sx={styles.actionsHeaderCell}>

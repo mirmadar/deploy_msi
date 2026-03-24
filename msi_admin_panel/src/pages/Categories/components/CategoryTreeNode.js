@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -7,6 +7,12 @@ import {
   Tooltip,
   CircularProgress,
   Checkbox,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   KeyboardArrowRight as KeyboardArrowRightIcon,
@@ -17,6 +23,7 @@ import {
   FilterList as FilterListIcon,
   ArrowUpward as ArrowUpwardIcon,
   ArrowDownward as ArrowDownwardIcon,
+  MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
 import { styles } from "./styles/CategoryTreeNode.styles";
 
@@ -40,6 +47,9 @@ export const CategoryTreeNode = ({
   onMoveDown,
   isMovingOrder = false,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [moreAnchorEl, setMoreAnchorEl] = useState(null);
   const isExpanded = expanded.has(node.categoryId);
   const hasChildren = node.hasChildren !== undefined ? node.hasChildren : false;
   const localChildren = childrenCache[node.categoryId] || [];
@@ -54,6 +64,19 @@ export const CategoryTreeNode = ({
 
   const canMoveUp = indexInSiblings > 0 && !isMovingOrder;
   const canMoveDown = indexInSiblings < siblingsCount - 1 && !isMovingOrder;
+  const isMoreOpen = Boolean(moreAnchorEl);
+
+  const openMoreMenu = (event) => {
+    event.stopPropagation();
+    setMoreAnchorEl(event.currentTarget);
+  };
+
+  const closeMoreMenu = () => setMoreAnchorEl(null);
+
+  const runActionAndClose = (action) => {
+    action?.();
+    closeMoreMenu();
+  };
 
   return (
     <Box>
@@ -68,12 +91,13 @@ export const CategoryTreeNode = ({
             onClick={(e) => e.stopPropagation()}
           />
 
-          {/* ID категории - оформлен как в других таблицах */}
-          <Box sx={styles.idCell}>
-            <Typography variant="body2" sx={styles.idText}>
-              #{node.categoryId}
-            </Typography>
-          </Box>
+          {!isMobile && (
+            <Box sx={styles.idCell}>
+              <Typography variant="body2" sx={styles.idText}>
+                #{node.categoryId}
+              </Typography>
+            </Box>
+          )}
 
           {/* Отступ для уровня вложенности */}
           <Box sx={styles.indent(level)} />
@@ -111,54 +135,20 @@ export const CategoryTreeNode = ({
             </Box>
           )}
 
-          {/* Название категории */}
-          <Typography variant="body2" sx={styles.categoryName}>
-            {node.name}
-          </Typography>
+          <Box sx={styles.titleBlock}>
+            <Typography variant="body2" sx={styles.categoryName}>
+              {node.name}
+            </Typography>
+            {isMobile && (
+              <Typography variant="caption" sx={styles.mobileIdText}>
+                #{node.categoryId}
+              </Typography>
+            )}
+          </Box>
         </Box>
 
         {/* Действия */}
         <Box sx={styles.actions}>
-          {/* Кнопка управления фильтрами - только для конечных категорий */}
-          {!hasChildren && onManageFilters && (
-            <Tooltip title="Управление фильтрами" arrow>
-              <IconButton
-                size="small"
-                onClick={() => onManageFilters(node.categoryId, node.name)}
-                sx={styles.filtersButton}
-              >
-                <FilterListIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-          {onMoveUp != null && (
-            <Tooltip title="Выше в списке" arrow>
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={() => onMoveUp(node.categoryId, parentId)}
-                  disabled={!canMoveUp}
-                  sx={{ minWidth: 32 }}
-                >
-                  <ArrowUpwardIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-          )}
-          {onMoveDown != null && (
-            <Tooltip title="Ниже в списке" arrow>
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={() => onMoveDown(node.categoryId, parentId)}
-                  disabled={!canMoveDown}
-                  sx={{ minWidth: 32 }}
-                >
-                  <ArrowDownwardIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-          )}
           <Tooltip title="Редактировать" arrow>
             <IconButton
               size="small"
@@ -168,15 +158,99 @@ export const CategoryTreeNode = ({
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Удалить" arrow>
-            <IconButton
-              size="small"
-              onClick={() => onDelete(node.categoryId)}
-              sx={styles.deleteButton}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+
+          {isMobile ? (
+            <>
+              <Tooltip title="Еще действия" arrow>
+                <IconButton size="small" onClick={openMoreMenu}>
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Menu anchorEl={moreAnchorEl} open={isMoreOpen} onClose={closeMoreMenu}>
+                {!hasChildren && onManageFilters && (
+                  <MenuItem onClick={() => runActionAndClose(() => onManageFilters(node.categoryId, node.name))}>
+                    <ListItemIcon>
+                      <FilterListIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Фильтры</ListItemText>
+                  </MenuItem>
+                )}
+                {onMoveUp != null && (
+                  <MenuItem disabled={!canMoveUp} onClick={() => runActionAndClose(() => onMoveUp(node.categoryId, parentId))}>
+                    <ListItemIcon>
+                      <ArrowUpwardIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Выше в списке</ListItemText>
+                  </MenuItem>
+                )}
+                {onMoveDown != null && (
+                  <MenuItem disabled={!canMoveDown} onClick={() => runActionAndClose(() => onMoveDown(node.categoryId, parentId))}>
+                    <ListItemIcon>
+                      <ArrowDownwardIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Ниже в списке</ListItemText>
+                  </MenuItem>
+                )}
+                <MenuItem onClick={() => runActionAndClose(() => onDelete(node.categoryId))}>
+                  <ListItemIcon>
+                    <DeleteIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>Удалить</ListItemText>
+                </MenuItem>
+              </Menu>
+            </>
+          ) : (
+            <>
+              {!hasChildren && onManageFilters && (
+                <Tooltip title="Управление фильтрами" arrow>
+                  <IconButton
+                    size="small"
+                    onClick={() => onManageFilters(node.categoryId, node.name)}
+                    sx={styles.filtersButton}
+                  >
+                    <FilterListIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {onMoveUp != null && (
+                <Tooltip title="Выше в списке" arrow>
+                  <span>
+                    <IconButton
+                      size="small"
+                      onClick={() => onMoveUp(node.categoryId, parentId)}
+                      disabled={!canMoveUp}
+                      sx={{ minWidth: 32 }}
+                    >
+                      <ArrowUpwardIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              )}
+              {onMoveDown != null && (
+                <Tooltip title="Ниже в списке" arrow>
+                  <span>
+                    <IconButton
+                      size="small"
+                      onClick={() => onMoveDown(node.categoryId, parentId)}
+                      disabled={!canMoveDown}
+                      sx={{ minWidth: 32 }}
+                    >
+                      <ArrowDownwardIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              )}
+              <Tooltip title="Удалить" arrow>
+                <IconButton
+                  size="small"
+                  onClick={() => onDelete(node.categoryId)}
+                  sx={styles.deleteButton}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
         </Box>
       </Box>
 

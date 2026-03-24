@@ -20,6 +20,10 @@ export const ProductsApi = {
     return http.get("/admin/products", { params });
   },
 
+  getUnits() {
+    return http.get("/admin/products/meta/units");
+  },
+
   get(id) {
     return http.get(`/admin/products/${id}`);
   },

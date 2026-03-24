@@ -25,6 +25,7 @@ import { SearchService } from 'src/admin/search/search.service';
 import { parseCategories, parseCategoryIds, parsePrice, parseBoolean, parsePagination, parseSortParams } from 'src/shared/common/utils/query-parser.util';
 import { JwtAuthGuard } from 'src/admin/auth/guards/jwt-auth.guard';
 import { CategoriesService } from 'src/admin/categories/categories.service';
+import { getProductUnitOptions } from 'src/shared/common/constants/product-units';
 
 @UseGuards(JwtAuthGuard)
 @Controller('admin/products')
@@ -34,6 +35,11 @@ export class ProductsController {
     private readonly searchService: SearchService,
     private readonly categoriesService: CategoriesService,
   ) {}
+
+  @Get('meta/units')
+  getUnits() {
+    return getProductUnitOptions();
+  }
 
   @Post()
   async create(@Body() dto: CreateProductDto) {

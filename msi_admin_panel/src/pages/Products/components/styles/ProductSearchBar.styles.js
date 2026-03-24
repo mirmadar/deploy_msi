@@ -14,9 +14,11 @@ export const styles = {
     display: "flex",
     alignItems: "center",
     gap: 2,
+    width: { xs: "100%", sm: "auto" },
   },
   searchField: {
     width: { xs: "100%", sm: 300 },
+    flex: { xs: 1, sm: "none" },
     "& .MuiOutlinedInput-root": {
       borderRadius: 2,
     },
@@ -53,7 +55,10 @@ export const styles = {
       color: "primary.main",
     },
   },
-  addButton: sharedStyles.primaryButton,
+  addButton: {
+    ...sharedStyles.primaryButton,
+    width: { xs: "100%", sm: "auto" },
+  },
   searchIcon: {
     color: "text.secondary",
   },

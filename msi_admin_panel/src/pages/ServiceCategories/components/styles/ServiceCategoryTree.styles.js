@@ -18,18 +18,18 @@ export const styles = {
   selectAllRow: {
     display: "flex",
     alignItems: "center",
-    gap: 1,
-    py: 1,
-    px: 2,
+    justifyContent: "space-between",
+    py: { xs: 0.5, sm: 1 },
+    px: { xs: 1, sm: 2 },
     borderBottom: "1px solid",
     borderColor: "divider",
-    bgcolor: "grey.50",
+    bgcolor: { xs: "transparent", sm: "grey.50" },
   },
   selectAllCheckbox: {
     padding: 0.5,
   },
   selectAllText: {
-    fontSize: "0.875rem",
+    fontSize: { xs: "0.8125rem", sm: "0.875rem" },
     fontWeight: 500,
     color: "text.primary",
   },

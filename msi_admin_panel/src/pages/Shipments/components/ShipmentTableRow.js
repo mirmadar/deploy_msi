@@ -65,7 +65,7 @@ export const ShipmentTableRow = ({
           </Typography>
         </Box>
       </TableCell>
-      <TableCell sx={styles.imageCell}>
+      <TableCell sx={{ ...styles.imageCell, display: { xs: "none", md: "table-cell" } }}>
         <Box sx={styles.cellContent}>
           {shipment.imageUrl ? (
             <Avatar
@@ -81,14 +81,14 @@ export const ShipmentTableRow = ({
           )}
         </Box>
       </TableCell>
-      <TableCell sx={styles.categoryCell}>
+      <TableCell sx={{ ...styles.categoryCell, display: { xs: "none", lg: "table-cell" } }}>
         <Box sx={styles.cellContent}>
           <Typography variant="body2" sx={styles.categoryText}>
             {shipment.category?.name || "—"}
           </Typography>
         </Box>
       </TableCell>
-      <TableCell sx={styles.createdCell}>
+      <TableCell sx={{ ...styles.createdCell, display: { xs: "none", md: "table-cell" } }}>
         <Box sx={styles.cellContent}>
           <Typography variant="body2" sx={styles.createdText}>
             {formatDateTime(shipment.createdAt)}

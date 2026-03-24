@@ -21,6 +21,42 @@ export const styles = {
     ...sharedStyles.borderedContainer,
     overflowX: "auto",
   },
+  mobileList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 1,
+    p: 1,
+  },
+  mobileCard: {
+    p: 0.875,
+    borderBottom: "1px solid",
+    borderColor: "divider",
+  },
+  mobileHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 1,
+    mb: 0.5,
+  },
+  mobileName: {
+    fontWeight: 600,
+    fontSize: "0.85rem",
+  },
+  mobileMeta: {
+    color: "text.secondary",
+    fontSize: "0.75rem",
+    mb: 0.25,
+  },
+  mobileActions: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: 0.25,
+    mt: 0.5,
+    "& .MuiIconButton-root": {
+      p: 0.5,
+    },
+  },
   tableHeaderRow: {
     bgcolor: "grey.50",
     "& .MuiTableCell-root": {

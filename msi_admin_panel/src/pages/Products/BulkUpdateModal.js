@@ -20,7 +20,7 @@ import { CategoriesApi } from "../../api/categories.api";
 import { ProductsApi } from "../../api/products.api";
 import { styles } from "./styles/BulkUpdateModal.styles";
 import { http } from "../../api/http";
-import { PRODUCT_UNITS_OPTIONS } from "../../utils/productUnits";
+import { useProductUnits } from "../../hooks/useProductUnits";
 import { convertFiltersToBackendFormat } from "./utils/filterUtils";
 
 export const BulkUpdateModal = ({
@@ -32,6 +32,7 @@ export const BulkUpdateModal = ({
   filters = null,
   confirmCount = null,
 }) => {
+  const productUnits = useProductUnits();
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [status, setStatus] = useState("");
@@ -281,7 +282,7 @@ export const BulkUpdateModal = ({
               label="Единица измерения"
             >
               <MenuItem value="">Не изменять</MenuItem>
-              {PRODUCT_UNITS_OPTIONS.map((option) => (
+              {productUnits.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
                   {option.label}
                 </MenuItem>

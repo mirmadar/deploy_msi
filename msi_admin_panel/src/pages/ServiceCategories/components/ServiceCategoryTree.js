@@ -69,6 +69,9 @@ export const ServiceCategoryTree = ({
   return (
     <Box sx={styles.treeContainer}>
       <Box sx={styles.selectAllRow}>
+        <Typography variant="body2" sx={styles.selectAllText}>
+          Выбрать все на странице
+        </Typography>
         <Checkbox
           checked={allSelected}
           indeterminate={someSelected && !allSelected}
@@ -76,9 +79,6 @@ export const ServiceCategoryTree = ({
           size="small"
           sx={styles.selectAllCheckbox}
         />
-        <Typography variant="body2" sx={styles.selectAllText}>
-          Выбрать все
-        </Typography>
       </Box>
 
       {categoryTree.map((node, index) => (

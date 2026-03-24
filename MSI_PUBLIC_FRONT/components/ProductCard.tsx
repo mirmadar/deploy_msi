@@ -9,6 +9,7 @@ import { QuantityControl } from './ui/QuantityControl';
 import { useState } from 'react';
 import { useCart } from '@/hooks/useCart';
 import { useCitySlug } from './cities/CityProvider';
+import { useProductUnits } from '@/hooks/useProductUnits';
 
 interface ProductCardProps {
   product: Product;
@@ -18,11 +19,12 @@ export default function ProductCard({ product }: ProductCardProps) {
   const productId = product.productId || product.id;
   const slug = product.slug;
   const citySlug = useCitySlug();
+  const { unitLabels } = useProductUnits(citySlug);
   if (!productId) return null;
   if (!slug) return null;
 
   const imageUrl = product.imageUrl || product.image;
-  const priceUnit = formatUnit(product.unit ?? product.priceUnit);
+  const priceUnit = formatUnit(product.unit ?? product.priceUnit, unitLabels);
   const isOutOfStock = product.status === 'OUT_OF_STOCK';
 
   const { cart, updateQuantity } = useCart();

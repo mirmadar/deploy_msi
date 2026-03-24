@@ -13,9 +13,13 @@ import {
 } from "@mui/icons-material";
 import { useAuth } from "../hooks/useAuth";
 import { RoleGuard } from "./auth/RoleGuard";
-import { styles } from "./styles/AppNavigation.styles";
+import { styles, DRAWER_WIDTH } from "./styles/AppNavigation.styles";
 
-export const AppNavigation = () => {
+export const AppNavigation = ({
+  variant = "permanent",
+  open = true,
+  onClose,
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -64,10 +68,20 @@ export const AppNavigation = () => {
     navigate("/login", { replace: true });
   };
 
+  const handleNavigate = (path) => {
+    navigate(path);
+    if (variant === "temporary" && onClose) {
+      onClose();
+    }
+  };
+
   return (
     <Drawer
-      variant="permanent"
+      variant={variant}
+      open={open}
+      onClose={onClose}
       sx={styles.drawer}
+      ModalProps={variant === "temporary" ? { keepMounted: true } : undefined}
       PaperProps={{
         sx: styles.drawerPaper,
       }}
@@ -85,7 +99,7 @@ export const AppNavigation = () => {
             return (
               <Typography
                 key={item.path}
-                onClick={() => navigate(item.path)}
+                onClick={() => handleNavigate(item.path)}
                 sx={styles.menuItem(isSelected)}
               >
                 {item.label}
@@ -95,7 +109,7 @@ export const AppNavigation = () => {
 
           <RoleGuard roles="SUPER_ADMIN">
             <Typography
-              onClick={() => navigate("/users")}
+              onClick={() => handleNavigate("/users")}
               sx={styles.menuItem(location.pathname === "/users")}
             >
               Пользователи
@@ -132,7 +146,7 @@ export const AppNavigation = () => {
                   color="primary"
                   size="small"
                   startIcon={<LockIcon />}
-                  onClick={() => navigate("/change-password")}
+                  onClick={() => handleNavigate("/change-password")}
                   sx={styles.changePasswordButton}
                 >
                   Сменить пароль
@@ -155,3 +169,5 @@ export const AppNavigation = () => {
     </Drawer>
   );
 };
+
+AppNavigation.DRAWER_WIDTH = DRAWER_WIDTH;

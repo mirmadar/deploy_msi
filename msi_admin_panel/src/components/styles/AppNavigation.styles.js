@@ -1,5 +1,5 @@
 // Стили для AppNavigation
-const DRAWER_WIDTH = 220;
+export const DRAWER_WIDTH = 220;
 const PADDING = 2;
 
 export const styles = {

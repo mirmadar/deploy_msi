@@ -34,6 +34,7 @@ export const styles = {
     borderRadius: 2,
     textTransform: "none",
     fontWeight: 500,
+    width: { xs: "100%", sm: "auto" },
     transition: "all 0.2s ease",
     "&:hover": {
       transform: "translateY(-2px)",

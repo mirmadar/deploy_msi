@@ -19,7 +19,7 @@ export const ServiceCategoryBulkActions = ({
         <Typography sx={styles.text}>
           Выбрано категорий услуг: <strong>{selectedCount}</strong>
         </Typography>
-        <Box display="flex" gap={1.5}>
+        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", width: { xs: "100%", sm: "auto" } }}>
           <Button
             variant="outlined"
             color="primary"

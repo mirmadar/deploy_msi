@@ -24,6 +24,9 @@ const inter = localFont({
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ru">
+      <head>
+        <link rel="icon" type="image/png" href="/logo_vkladka.png" />
+      </head>
       <body className={inter.className}>
         <CityProvider>
           <main>{children}</main>

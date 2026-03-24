@@ -28,9 +28,10 @@ import { CharacteristicNamesApi } from "../../api/characteristic-names.api";
 import { CategoriesApi } from "../../api/categories.api";
 import { styles } from "./styles/ProductEdit.styles";
 import { http } from "../../api/http";
-import { PRODUCT_UNITS_OPTIONS } from "../../utils/productUnits";
+import { useProductUnits } from "../../hooks/useProductUnits";
 
 export const ProductEdit = ({ productId, onClose }) => {
+  const productUnits = useProductUnits();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -287,7 +288,7 @@ export const ProductEdit = ({ productId, onClose }) => {
             onChange={(e) => setUnit(e.target.value)}
             >
             <MenuItem value="">Не указано</MenuItem>
-            {PRODUCT_UNITS_OPTIONS.map((option) => (
+            {productUnits.map((option) => (
               <MenuItem key={option.value} value={option.value}>
                 {option.label}
               </MenuItem>

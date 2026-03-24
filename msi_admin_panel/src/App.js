@@ -1,7 +1,18 @@
 // src/App.js
-import React from "react";
+import React, { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ThemeProvider, CssBaseline, Container, Box } from "@mui/material";
+import {
+  ThemeProvider,
+  CssBaseline,
+  Container,
+  Box,
+  AppBar,
+  Toolbar,
+  Typography,
+  IconButton,
+  useMediaQuery,
+} from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { LoginPage } from "./pages/Auth/LoginPage";
@@ -21,7 +32,12 @@ import { AppNavigation } from "./components/AppNavigation";
 import { theme } from "./styles/mui-theme";
 
 function App() {
-  const drawerWidth = 220;
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+  const drawerWidth = AppNavigation.DRAWER_WIDTH || 220;
+
+  const handleOpenMobileNav = () => setMobileNavOpen(true);
+  const handleCloseMobileNav = () => setMobileNavOpen(false);
 
   return (
     <ThemeProvider theme={theme}>
@@ -38,18 +54,58 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Box sx={{ display: "flex", minHeight: "100vh" }}>
-                    <AppNavigation />
+                    {isDesktop ? (
+                      <AppNavigation />
+                    ) : (
+                      <AppNavigation
+                        variant="temporary"
+                        open={mobileNavOpen}
+                        onClose={handleCloseMobileNav}
+                      />
+                    )}
                     <Box
                       component="main"
                       sx={{
                         flexGrow: 1,
-                        width: `calc(100% - ${drawerWidth}px)`,
+                        width: { xs: "100%", md: `calc(100% - ${drawerWidth}px)` },
                         bgcolor: "background.default",
                       }}
                     >
+                      {!isDesktop && (
+                        <AppBar
+                          position="sticky"
+                          color="inherit"
+                          elevation={0}
+                          sx={{
+                            borderBottom: "1px solid",
+                            borderColor: "divider",
+                            top: 0,
+                            zIndex: (muiTheme) => muiTheme.zIndex.drawer - 1,
+                          }}
+                        >
+                          <Toolbar sx={{ minHeight: 56, px: 1.5 }}>
+                            <IconButton
+                              edge="start"
+                              color="inherit"
+                              aria-label="Открыть меню"
+                              onClick={handleOpenMobileNav}
+                              sx={{ mr: 1 }}
+                            >
+                              <MenuIcon />
+                            </IconButton>
+                            <Typography variant="h6" sx={{ fontSize: "1rem" }}>
+                              MSI Admin
+                            </Typography>
+                          </Toolbar>
+                        </AppBar>
+                      )}
                       <Container
                         maxWidth={false}
-                        sx={{ mt: 2, mb: 2, px: { xs: 1, sm: 2, md: 3 } }}
+                        sx={{
+                          mt: { xs: 1.5, md: 2 },
+                          mb: 2,
+                          px: { xs: 1, sm: 2, md: 3 },
+                        }}
                       >
                         <Routes>
                           <Route

@@ -4,7 +4,7 @@ export const styles = {
     display: "flex",
     flexDirection: "column",
     gap: 2,
-    mt: 3,
+    mt: { xs: 2, sm: 3 },
     pt: 2,
     borderTop: "1px solid",
     borderColor: "divider",
@@ -35,6 +35,7 @@ export const styles = {
     alignItems: "center",
     gap: 2,
     flexWrap: "wrap",
+    width: { xs: "100%", sm: "auto" },
   },
   rowsPerPageControl: {
     display: "flex",
@@ -58,6 +59,8 @@ export const styles = {
     display: "flex",
     alignItems: "center",
     gap: 1,
+    width: { xs: "100%", sm: "auto" },
+    justifyContent: { xs: "space-between", sm: "flex-start" },
   },
   navButton: {
     padding: "4px",
@@ -66,6 +69,10 @@ export const styles = {
     },
   },
   pageButtons: {
+    display: "flex",
+    flexWrap: "nowrap",
+    overflowX: "auto",
+    maxWidth: { xs: "55vw", sm: "none" },
     "& .MuiButton-root": {
       minWidth: "36px",
       padding: "4px 8px",
@@ -91,5 +98,7 @@ export const styles = {
     color: "text.secondary",
     fontSize: "0.875rem",
     whiteSpace: "nowrap",
+    width: { xs: "100%", sm: "auto" },
+    textAlign: { xs: "left", sm: "inherit" },
   },
 };

@@ -13,7 +13,10 @@ export const styles = {
   actionsLeft: {
     flex: 1,
   },
-  addButton: sharedStyles.primaryButton,
+  addButton: {
+    ...sharedStyles.primaryButton,
+    width: { xs: "100%", sm: "auto" },
+  },
   errorAlert: sharedStyles.errorAlert,
   loadingBox: sharedStyles.centeredBox,
   emptyBox: sharedStyles.centeredBox,

@@ -31,7 +31,7 @@ export const ProductBulkActions = ({
             </Tooltip>
           )}
         </Box>
-        <Box display="flex" gap={1.5}>
+        <Box sx={styles.actions}>
           <Button
             variant="outlined"
             color="primary"

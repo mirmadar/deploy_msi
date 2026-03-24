@@ -19,7 +19,7 @@ export const styles = {
   emptyBox: sharedStyles.centeredBox,
   treeContainer: {
     ...sharedStyles.borderedContainer,
-    overflowX: "auto",
+    overflowX: { xs: "hidden", sm: "auto" },
   },
   dialogPaper: sharedStyles.dialogPaper,
   dialogContent: sharedStyles.dialogContent,

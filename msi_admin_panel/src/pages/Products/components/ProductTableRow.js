@@ -59,7 +59,7 @@ export const ProductTableRow = ({
             </Box>
           </Box>
         </TableCell>
-        <TableCell sx={styles.unitCell}>
+        <TableCell sx={{ ...styles.unitCell, display: { xs: "none", md: "table-cell" } }}>
           <Box sx={styles.cellContent}>
             <Typography variant="body2" sx={styles.unitText}>
               {getUnitLabel(product.unit || product.unitOfMeasurement)}
@@ -73,7 +73,7 @@ export const ProductTableRow = ({
             </Typography>
           </Box>
         </TableCell>
-        <TableCell sx={styles.statusCell}>
+        <TableCell sx={{ ...styles.statusCell, display: { xs: "none", md: "table-cell" } }}>
           <Box sx={styles.cellContent}>
             <Typography variant="body2" sx={styles.statusText}>
               {product.status === "ARCHIVE"
@@ -84,14 +84,14 @@ export const ProductTableRow = ({
             </Typography>
           </Box>
         </TableCell>
-        <TableCell sx={styles.categoryCell}>
+        <TableCell sx={{ ...styles.categoryCell, display: { xs: "none", lg: "table-cell" } }}>
           <Box sx={styles.cellContent}>
             <Typography variant="body2" sx={styles.categoryText}>
               {product.category?.name || "Без категории"}
             </Typography>
           </Box>
         </TableCell>
-        <TableCell sx={styles.isNewCell}>
+        <TableCell sx={{ ...styles.isNewCell, display: { xs: "none", md: "table-cell" } }}>
           <Box sx={styles.cellContent}>
             {product.isNew && (
               <Chip

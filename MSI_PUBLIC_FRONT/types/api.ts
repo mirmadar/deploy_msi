@@ -48,6 +48,11 @@ export interface Product {
   [key: string]: unknown; // для дополнительных полей
 }
 
+export interface ProductUnitOption {
+  value: string;
+  label: string;
+}
+
 export interface ProductCharacteristic {
   id: number;
   name: string;

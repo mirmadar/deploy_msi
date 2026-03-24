@@ -35,6 +35,12 @@ export const styles = {
     fontWeight: 500,
     color: "primary.dark",
   },
+  actions: {
+    display: "flex",
+    gap: 1.5,
+    flexWrap: "wrap",
+    width: { xs: "100%", sm: "auto" },
+  },
   closeButton: {
     color: "text.secondary",
     "&:hover": {
@@ -45,6 +51,7 @@ export const styles = {
     borderRadius: 2,
     textTransform: "none",
     fontWeight: 500,
+    width: { xs: "100%", sm: "auto" },
     transition: "all 0.2s ease",
     "&:hover": {
       transform: "translateY(-2px)",

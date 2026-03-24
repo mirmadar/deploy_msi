@@ -21,7 +21,7 @@ import {
 } from "@mui/material";
 import { Search as SearchIcon, ExpandMore, ChevronRight } from "@mui/icons-material";
 import { styles } from "./styles/ProductFilters.styles";
-import { PRODUCT_UNITS_OPTIONS } from "../../../utils/productUnits";
+import { useProductUnits } from "../../../hooks/useProductUnits";
 
 function CategoryTreeNode({ node, level, selectedIds, expandedIds, search, onToggle, onExpand }) {
   const hasChildren = node.children && node.children.length > 0;
@@ -94,6 +94,7 @@ function CategoryTreeNode({ node, level, selectedIds, expandedIds, search, onTog
 }
 
 export default function ProductFilters({ onChange, appliedFilters }) {
+  const productUnits = useProductUnits();
   const [categoryTree, setCategoryTree] = useState([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
   const [expandedIds, setExpandedIds] = useState(() => new Set());
@@ -504,7 +505,7 @@ export default function ProductFilters({ onChange, appliedFilters }) {
                     onChange={(e) => setUnit(e.target.value)}
                   >
                     <MenuItem value="">Все</MenuItem>
-                    {PRODUCT_UNITS_OPTIONS.map((option) => (
+                    {productUnits.map((option) => (
                       <MenuItem key={option.value} value={option.value}>
                         {option.label}
                       </MenuItem>

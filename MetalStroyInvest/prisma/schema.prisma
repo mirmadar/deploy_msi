@@ -138,11 +138,15 @@ enum ProductUnit {
   PG_M
   T
   KG
+  GR
   M
   M2
   M3
   SHT
   UP
+  SECTION
+  ROLL
+  BUKHTA
 }
 
 model Cart {

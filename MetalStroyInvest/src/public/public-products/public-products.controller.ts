@@ -1,9 +1,15 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { PublicProductsService } from './public-products.service';
+import { getProductUnitOptions } from 'src/shared/common/constants/product-units';
 
 @Controller('public/:citySlug/products')
 export class PublicProductsController {
   constructor(private readonly publicProductsService: PublicProductsService) {}
+
+  @Get('meta/units')
+  getUnits() {
+    return getProductUnitOptions();
+  }
 
   /**
    * Получение товара по slug

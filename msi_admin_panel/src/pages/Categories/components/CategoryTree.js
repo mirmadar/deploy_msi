@@ -71,6 +71,9 @@ export const CategoryTree = ({
       {/* Чекбокс для выбора всех */}
       {categoryTree.length > 0 && (
         <Box sx={styles.selectAllRow}>
+          <Typography variant="body2" sx={styles.selectAllText}>
+            Выбрать все на странице
+          </Typography>
           <Checkbox
             checked={allSelected}
             indeterminate={someSelected && !allSelected}
@@ -78,9 +81,6 @@ export const CategoryTree = ({
             size="small"
             sx={styles.selectAllCheckbox}
           />
-          <Typography variant="body2" sx={styles.selectAllText}>
-            Выбрать все
-          </Typography>
         </Box>
       )}
       

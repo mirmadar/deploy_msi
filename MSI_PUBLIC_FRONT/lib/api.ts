@@ -6,6 +6,7 @@ import type {
   Order,
   PaginatedResponse,
   ProductVariant,
+  ProductUnitOption,
   CategoryFilter,
   Cart,
   CartResponse,
@@ -339,6 +340,10 @@ class ApiClient {
   // Products
   async getProduct(citySlug: string, slug: string): Promise<Product> {
     return this.request<Product>(`/public/${citySlug}/products/${slug}`);
+  }
+
+  async getProductUnits(citySlug: string): Promise<ProductUnitOption[]> {
+    return this.request<ProductUnitOption[]>(`/public/${citySlug}/products/meta/units`);
   }
 
   async getProductVariants(slug: string): Promise<ProductVariant[]> {

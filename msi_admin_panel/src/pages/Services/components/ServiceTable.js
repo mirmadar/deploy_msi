@@ -5,7 +5,18 @@ import {
   Box,
   CircularProgress,
   Typography,
+  Checkbox,
+  IconButton,
+  Tooltip,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
+import {
+  ArrowUpward as ArrowUpwardIcon,
+  ArrowDownward as ArrowDownwardIcon,
+  DashboardCustomize as ConstructorIcon,
+} from "@mui/icons-material";
+import { TableActions } from "../../../components/common/TableActions";
 import { ServiceTableHeader } from "./ServiceTableHeader";
 import { ServiceTableRow } from "./ServiceTableRow";
 import { styles } from "./styles/ServiceTable.styles";
@@ -30,6 +41,8 @@ export const ServiceTable = ({
   onSelect,
   onSelectAll,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const visibleServiceIds = services.map((s) => s.id ?? s.serviceId);
   if (loading && services.length === 0) {
     return (
@@ -66,6 +79,88 @@ export const ServiceTable = ({
       totalInCategory: showOrderButtons ? total : siblingsCount,
     };
   };
+
+  const allSelected =
+    visibleServiceIds.length > 0 &&
+    visibleServiceIds.every((id) => selectedServices.includes(id));
+  const someSelected =
+    selectedServices.some((id) => visibleServiceIds.includes(id)) && !allSelected;
+
+  if (isMobile) {
+    return (
+      <Box sx={styles.mobileList}>
+        {onSelectAll && (
+          <Box sx={styles.mobileSelectAllRow}>
+            <Typography sx={styles.mobileSelectAllLabel}>Выбрать все на странице</Typography>
+            <Checkbox
+              indeterminate={someSelected}
+              checked={allSelected}
+              onChange={(e) => onSelectAll(visibleServiceIds, e.target.checked)}
+              size="small"
+            />
+          </Box>
+        )}
+
+        {services.map((service) => {
+          const id = service.id ?? service.serviceId;
+          const categoryName =
+            service.category?.name ?? service.categoryName ?? "—";
+          const { indexInSiblings, siblingsCount, globalIndex, totalInCategory } =
+            getSiblingInfo(service);
+          const canMoveUp =
+            (showOrderButtons ? globalIndex > 0 : indexInSiblings > 0) && !isMovingOrder;
+          const canMoveDown =
+            (showOrderButtons ? globalIndex < totalInCategory - 1 : indexInSiblings < siblingsCount - 1) &&
+            !isMovingOrder;
+
+          return (
+            <Box key={id} sx={styles.mobileCard}>
+              <Box sx={styles.mobileTopRow}>
+                {onSelect && (
+                  <Checkbox
+                    checked={selectedServices.includes(id)}
+                    onChange={(e) => onSelect(id, e.target.checked)}
+                    size="small"
+                  />
+                )}
+                <Typography variant="caption" color="text.secondary">
+                  #{id}
+                </Typography>
+              </Box>
+              <Typography sx={styles.mobileName}>{service.name}</Typography>
+              <Typography sx={styles.mobileMeta}>{categoryName}</Typography>
+              <Box sx={styles.mobileActions}>
+                {showOrderButtons && (
+                  <>
+                    <Tooltip title="Выше в списке" arrow>
+                      <span>
+                        <IconButton size="small" onClick={() => onMoveUp?.(id)} disabled={!canMoveUp}>
+                          <ArrowUpwardIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Ниже в списке" arrow>
+                      <span>
+                        <IconButton size="small" onClick={() => onMoveDown?.(id)} disabled={!canMoveDown}>
+                          <ArrowDownwardIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </>
+                )}
+                <Tooltip title="Конструктор страницы" arrow>
+                  <IconButton size="small" onClick={() => onOpenConstructor?.(id)}>
+                    <ConstructorIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <TableActions onEdit={() => onEdit(id)} onDelete={() => onDelete(id)} />
+              </Box>
+            </Box>
+          );
+        })}
+      </Box>
+    );
+  }
 
   return (
     <Table sx={styles.table}>
