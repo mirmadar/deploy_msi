@@ -2,14 +2,14 @@
  * Скрипт переиндексации всех товаров в Elasticsearch.
  * Запуск после старта контейнера: npm run reindex
  *
- * Требования: запущен контейнер Elasticsearch (docker compose up -d в папке ElasticSearch),
+ * Требования: запущен Elasticsearch (например docker compose в deploy_msi),
  *             настроенная БД (переменные в .env для Prisma).
  */
 import { PrismaClient } from '@prisma/client';
 import { Client } from '@elastic/elasticsearch';
 
-const BATCH_SIZE = 500;
-const ES_NODE = process.env.ELASTICSEARCH_NODE  //  || 'http://localhost:9200';
+const BATCH_SIZE = 5000;
+const ES_NODE = process.env.ELASTICSEARCH_NODE || 'http://localhost:9200';
 
 const prisma = new PrismaClient();
 const elasticClient = new Client({ node: ES_NODE });
@@ -80,6 +80,7 @@ async function reindexAllProducts() {
           status: product.status,
           unit: product.unit,
           slug: product.slug,
+          imageUrl: product.imageUrl,
           category:
             product.category && {
               id: product.category.categoryId,
