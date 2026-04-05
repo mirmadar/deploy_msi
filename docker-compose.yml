@@ -23,9 +23,11 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    # Только localhost: снаружи ES недоступен (защита от сканеров и DELETE по API).
+    # Backend ходит на http://elasticsearch:9200 внутри сети compose — порты хоста не нужны.
+    # Для curl/диагностики с VPS: curl http://127.0.0.1:9200
     ports:
-      - "9200:9200"
-      - "9300:9300"
+      - "127.0.0.1:9200:9200"
     volumes:
       - es_data:/usr/share/elasticsearch/data
 
