@@ -67,21 +67,31 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  app.enableCors({
-    origin: getCorsOrigins(),
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: [
-      'Content-Type',
-      'Accept',
-      'Authorization',
-      'Range',
-      'X-Total-Count',
-    ],
-    exposedHeaders: ['Content-Range', 'X-Total-Count'],
-    credentials: true,
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-  });
+  const allowedOrigins = getCorsOrigins();
+  // Если фронт ходит на API с того же домена (через nginx по /api), CORS вообще не нужен.
+  // Включаем его только когда явно задан список разрешённых origin’ов.
+  if (allowedOrigins.length > 0) {
+    app.enableCors({
+      origin: (origin, callback) => {
+        // Запросы без Origin (curl, сервер-сервер) не блокируем.
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error(`CORS: origin not allowed: ${origin}`), false);
+      },
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+      allowedHeaders: [
+        'Content-Type',
+        'Accept',
+        'Authorization',
+        'Range',
+        'X-Total-Count',
+      ],
+      exposedHeaders: ['Content-Range', 'X-Total-Count'],
+      credentials: true,
+      preflightContinue: false,
+      optionsSuccessStatus: 204,
+    });
+  }
 
   app.useGlobalPipes(new ValidationPipe());
 
