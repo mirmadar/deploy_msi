@@ -19,6 +19,28 @@ import { CreateOrderDto } from './dto/create-order.dto';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  private isPdf(buffer: Buffer): boolean {
+    return (
+      buffer.length >= 5 &&
+      buffer[0] === 0x25 &&
+      buffer[1] === 0x50 &&
+      buffer[2] === 0x44 &&
+      buffer[3] === 0x46 &&
+      buffer[4] === 0x2d
+    );
+  }
+
+  private isDocx(buffer: Buffer): boolean {
+    // DOCX — это ZIP контейнер с сигнатурой PK..
+    return (
+      buffer.length >= 4 &&
+      buffer[0] === 0x50 &&
+      buffer[1] === 0x4b &&
+      (buffer[2] === 0x03 || buffer[2] === 0x05 || buffer[2] === 0x07) &&
+      (buffer[3] === 0x04 || buffer[3] === 0x06 || buffer[3] === 0x08)
+    );
+  }
+
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   async createOrder(
@@ -31,7 +53,6 @@ export class OrdersController {
       const allowedMimeTypes = [
         'application/pdf',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/msword',
       ];
 
       if (!allowedMimeTypes.includes(file.mimetype)) {
@@ -44,6 +65,25 @@ export class OrdersController {
       if (file.size > maxSize) {
         throw new BadRequestException(
           'Размер файла превышает допустимый лимит (10 МБ)',
+        );
+      }
+
+      const original = file.originalname.toLowerCase();
+      const hasPdfExt = original.endsWith('.pdf');
+      const hasDocxExt = original.endsWith('.docx');
+
+      if (!hasPdfExt && !hasDocxExt) {
+        throw new BadRequestException(
+          'Недопустимое расширение файла. Разрешены только .pdf и .docx',
+        );
+      }
+
+      const bySignature = hasPdfExt
+        ? this.isPdf(file.buffer)
+        : this.isDocx(file.buffer);
+      if (!bySignature) {
+        throw new BadRequestException(
+          'Файл не прошел проверку сигнатуры. Загрузите корректный PDF или DOCX.',
         );
       }
     }

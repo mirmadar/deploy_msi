@@ -18,6 +18,9 @@ export const OrderTableHeader = () => {
         <TableCell sx={styles.statusHeaderCell}>
           <Typography variant="subtitle2">Статус отправки</Typography>
         </TableCell>
+        <TableCell sx={{ ...styles.bitrixLeadHeaderCell, display: { xs: "none", lg: "table-cell" } }}>
+          <Typography variant="subtitle2">ID лида Bitrix</Typography>
+        </TableCell>
         <TableCell sx={{ ...styles.dateHeaderCell, display: { xs: "none", lg: "table-cell" } }}>
           <Typography variant="subtitle2">Дата создания</Typography>
         </TableCell>

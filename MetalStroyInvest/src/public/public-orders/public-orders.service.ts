@@ -1,10 +1,12 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
 import { PrismaService } from 'src/shared/prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ProductUnit, ProductStatus } from '@prisma/client';
 import type { SendMailOptions } from 'nodemailer';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Queue } from 'bullmq';
 import { CartService } from 'src/public/cart/cart.service';
 import { MailService } from 'src/shared/mail/mail.service';
 import PDFDocument from 'pdfkit';
@@ -13,11 +15,14 @@ import PDFDocument from 'pdfkit';
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
   private robotoFontPath: string | null = null;
+  private readonly mailJobName = 'send-order-emails';
+  private readonly bitrixJobName = 'send-bitrix-lead';
 
   constructor(
     private prisma: PrismaService,
     private cartService: CartService,
     private mailService: MailService,
+    @InjectQueue('orders-processing') private ordersQueue: Queue,
   ) {
     // Пытаемся найти любой TTF-шрифт в папке fonts внутри проекта/контейнера.
     try {
@@ -168,14 +173,63 @@ export class OrdersService {
       return newOrder;
     });
 
-    this.sendOrderEmails(order.orderNumber, file).catch((error) => {
-      this.logger.error(
-        `Ошибка отправки email для заказа ${order.orderNumber}: ${error.message}`,
-        error.stack,
-      );
-    });
+    await this.enqueueOrderProcessing(order.orderNumber, file);
 
     return order;
+  }
+
+  private async enqueueOrderProcessing(
+    orderNumber: string,
+    file?: Express.Multer.File,
+  ): Promise<void> {
+    const serializedFile = file
+      ? {
+          originalname: file.originalname,
+          mimetype: file.mimetype,
+          encoding: file.encoding,
+          size: file.size,
+          bufferBase64: file.buffer.toString('base64'),
+        }
+      : undefined;
+
+    const defaultJobOptions = {
+      attempts: 5,
+      backoff: { type: 'exponential' as const, delay: 5000 },
+      removeOnComplete: 100,
+      removeOnFail: 1000,
+    };
+
+    try {
+      await this.ordersQueue.add(
+        this.mailJobName,
+        {
+          orderNumber,
+          file: serializedFile,
+        },
+        {
+          ...defaultJobOptions,
+          jobId: `emails-${orderNumber}`,
+        },
+      );
+
+      await this.ordersQueue.add(
+        this.bitrixJobName,
+        { orderNumber },
+        {
+          ...defaultJobOptions,
+          jobId: `bitrix-${orderNumber}`,
+        },
+      );
+    } catch (error) {
+      this.logger.error(
+        `Не удалось добавить задачи в очередь для заказа ${orderNumber}, запускаем синхронный fallback: ${error.message}`,
+        error.stack,
+      );
+      await Promise.allSettled([
+        this.sendOrderEmails(orderNumber, file),
+        this.sendBitrixLead(orderNumber),
+      ]);
+    }
   }
 
   async getOrderByNumber(orderNumber: string) {
@@ -230,9 +284,9 @@ export class OrdersService {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
-    const prefix = `ORD-${year}-${month}-`;
+    const prefix = `${year}${month}`;
     const MAX_RETRIES = 5;
-    const MAX_SEQUENCE = 99999; // 5 цифр = до 99,999 заказов в месяц
+    const SEQUENCE_LEN = 6;
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
@@ -251,7 +305,7 @@ export class OrdersService {
           let sequenceNumber = 1;
 
           if (lastOrder) {
-            const lastNumber = lastOrder.orderNumber.replace(prefix, '');
+            const lastNumber = lastOrder.orderNumber.slice(prefix.length);
             const parsed = parseInt(lastNumber, 10);
             
             if (isNaN(parsed)) {
@@ -264,7 +318,9 @@ export class OrdersService {
             }
           }
 
-          const formattedNumber = sequenceNumber.toString().padStart(5, '0');
+          const formattedNumber = sequenceNumber
+            .toString()
+            .padStart(SEQUENCE_LEN, '0');
           return `${prefix}${formattedNumber}`;
         });
 
@@ -505,6 +561,212 @@ export class OrdersService {
   private getDownloadUrl(orderNumber: string): string {
     const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
     return `${baseUrl}/public/orders/${orderNumber}/download`;
+  }
+
+  private getBitrixWebhookBaseUrl(): string {
+    const webhookUrl = process.env.BITRIX_WEBHOOK_URL?.trim();
+    if (!webhookUrl) {
+      throw new Error(
+        'BITRIX_WEBHOOK_URL не задан. Проверьте переменные окружения.',
+      );
+    }
+
+    return webhookUrl.replace(/\/+$/, '');
+  }
+
+  private getBitrixMethodUrl(method: string): string {
+    const base = this.getBitrixWebhookBaseUrl();
+    if (base.includes(`/${method}`)) {
+      return base;
+    }
+
+    return `${base}/${method}.json`;
+  }
+
+  private getBitrixOrderNumberFieldCode(): string {
+    return process.env.BITRIX_ORDER_NUMBER_FIELD_CODE || 'UF_CRM_ORDER_NUMBER';
+  }
+
+  private getBitrixLeadTitle(orderNumber: string): string {
+    return `Новый заказ ${orderNumber}`;
+  }
+
+  private normalizePhoneForBitrix(rawPhone: string): string {
+    const digits = rawPhone.replace(/\D/g, '');
+    if (!digits) {
+      return rawPhone.trim();
+    }
+
+    if (digits.length === 11 && digits.startsWith('8')) {
+      return `+7${digits.slice(1)}`;
+    }
+    if (digits.length === 11 && digits.startsWith('7')) {
+      return `+${digits}`;
+    }
+    if (digits.length === 10 && digits.startsWith('9')) {
+      return `+7${digits}`;
+    }
+
+    return rawPhone.trim().startsWith('+') ? rawPhone.trim() : `+${digits}`;
+  }
+
+  private buildBitrixComments(order: {
+    orderNumber: string;
+    items: Array<{
+      productName: string;
+      quantity: number;
+      unit: ProductUnit;
+      product: {
+        characteristics: Array<{
+          value: string;
+          characteristicName: {
+            name: string;
+          };
+        }>;
+      };
+    }>;
+  }): string {
+    const lines = order.items.map((item, index) => {
+      const characteristicsText =
+        item.product.characteristics.length > 0
+          ? item.product.characteristics
+              .map((char) => `${char.characteristicName.name}: ${char.value}`)
+              .join(', ')
+          : '—';
+
+      return `${index + 1}. ${item.productName} | Кол-во: ${item.quantity} ${this.formatUnit(item.unit)} | Характеристики: ${characteristicsText}`;
+    });
+
+    return [
+      `Номер заказа: ${order.orderNumber}`,
+      '',
+      'Состав заказа:',
+      ...lines,
+      '',
+      `Ссылка на файл заказа: ${this.getDownloadUrl(order.orderNumber)}`,
+    ].join('\n');
+  }
+
+  private async findExistingBitrixLeadId(
+    orderNumber: string,
+  ): Promise<number | null> {
+    const fieldCode = this.getBitrixOrderNumberFieldCode();
+    const url = this.getBitrixMethodUrl('crm.lead.list');
+    const parseLeadId = (result?: Array<{ ID?: string | number }>) => {
+      const leadId = Number(result?.[0]?.ID);
+      return Number.isFinite(leadId) ? leadId : null;
+    };
+
+    const request = async (filter: Record<string, unknown>) => {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filter,
+          select: ['ID'],
+          order: { ID: 'DESC' },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Bitrix24 вернул HTTP ${response.status} при поиске лида.`,
+        );
+      }
+
+      return (await response.json()) as {
+        result?: Array<{ ID?: string | number }>;
+        error?: string;
+        error_description?: string;
+      };
+    };
+
+    const byCustomField = await request({ [fieldCode]: orderNumber });
+    if (!byCustomField.error) {
+      return parseLeadId(byCustomField.result);
+    }
+
+    this.logger.warn(
+      `Поиск дубля по полю ${fieldCode} недоступен в Bitrix (${byCustomField.error}). Используем fallback по TITLE.`,
+    );
+
+    const byTitle = await request({ TITLE: this.getBitrixLeadTitle(orderNumber) });
+    if (byTitle.error) {
+      throw new Error(
+        `Bitrix24 ошибка поиска лида: ${byTitle.error_description || byTitle.error}`,
+      );
+    }
+
+    return parseLeadId(byTitle.result);
+  }
+
+  private async markBitrixSent(
+    orderNumber: string,
+    bitrixLeadId: number,
+  ): Promise<void> {
+    await this.prisma.$executeRaw`
+      UPDATE "orders"
+      SET "bitrixSent" = true,
+          "bitrixSentAt" = NOW(),
+          "bitrixLeadId" = ${bitrixLeadId}
+      WHERE "orderNumber" = ${orderNumber}
+    `;
+  }
+
+  async sendBitrixLead(orderNumber: string): Promise<void> {
+    const order = await this.getOrderByNumber(orderNumber);
+    const existingLeadId = await this.findExistingBitrixLeadId(orderNumber);
+
+    if (existingLeadId) {
+      await this.markBitrixSent(orderNumber, existingLeadId);
+      return;
+    }
+
+    const url = this.getBitrixMethodUrl('crm.lead.add');
+    const fieldCode = this.getBitrixOrderNumberFieldCode();
+    const normalizedPhone = this.normalizePhoneForBitrix(order.clientPhone);
+
+    const fields: Record<string, unknown> = {
+      TITLE: this.getBitrixLeadTitle(order.orderNumber),
+      NAME: order.clientName,
+      PHONE: [{ VALUE: normalizedPhone, VALUE_TYPE: 'WORK' }],
+      EMAIL: [{ VALUE: order.clientEmail, VALUE_TYPE: 'WORK' }],
+      COMMENTS: this.buildBitrixComments(order),
+      [fieldCode]: order.orderNumber,
+    };
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fields,
+        params: { REGISTER_SONET_EVENT: 'Y' },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Bitrix24 вернул HTTP ${response.status} при создании лида.`,
+      );
+    }
+
+    const payload = (await response.json()) as {
+      result?: number;
+      error?: string;
+      error_description?: string;
+    };
+
+    if (payload.error) {
+      throw new Error(
+        `Bitrix24 ошибка создания лида: ${payload.error_description || payload.error}`,
+      );
+    }
+
+    if (!payload.result) {
+      throw new Error('Bitrix24 не вернул ID лида после создания.');
+    }
+
+    await this.markBitrixSent(orderNumber, payload.result);
   }
 
   async sendClientEmail(orderNumber: string): Promise<void> {

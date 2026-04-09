@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/shared/prisma/prisma.service';
 import { paginateQuery, PaginatedResult } from 'src/shared/common/utils/pagination.util';
 import { Prisma } from '@prisma/client';
@@ -34,6 +34,7 @@ export class AdminOrdersService {
     companyEmailSent: boolean;
     clientEmailSent: boolean;
     bitrixSent: boolean;
+    bitrixLeadId: number | null;
     companyEmailSentAt: Date | null;
     clientEmailSentAt: Date | null;
     bitrixSentAt: Date | null;
@@ -129,6 +130,7 @@ export class AdminOrdersService {
       companyEmailSent: true,
       clientEmailSent: true,
       bitrixSent: true,
+      bitrixLeadId: true,
       companyEmailSentAt: true,
       clientEmailSentAt: true,
       bitrixSentAt: true,
@@ -184,7 +186,6 @@ export class AdminOrdersService {
   }
 
   async resendBitrix(orderNumber: string): Promise<void> {
-    // TODO: Реализовать отправку в Bitrix24
-    throw new HttpException('Bitrix24 интеграция еще не реализована', HttpStatus.NOT_IMPLEMENTED);
+    await this.publicOrdersService.sendBitrixLead(orderNumber);
   }
 }

@@ -27,6 +27,13 @@ services:
     volumes:
       - es_data:/usr/share/elasticsearch/data
 
+  redis:
+    image: redis:7-alpine
+    container_name: metalstroy-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+
   backend:
     build:
       context: ./MetalStroyInvest
@@ -35,6 +42,7 @@ services:
     depends_on:
       - db
       - elasticsearch
+      - redis
     env_file: .env
     environment:
       NODE_ENV: production
@@ -57,6 +65,9 @@ services:
       S3_ACCESS_KEY: ${S3_ACCESS_KEY}
       S3_SECRET_KEY: ${S3_SECRET_KEY}
       CORS_ORIGINS: ${CORS_ORIGINS:-}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
 
   admin-frontend:
     build:
@@ -68,7 +79,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "127.0.0.1:3001:80"
+      - "3001:80"
 
   public-frontend:
     build:
@@ -97,3 +108,4 @@ services:
 volumes:
   postgres_data:
   es_data:
+  redis_data:

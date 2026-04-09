@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { BullModule } from '@nestjs/bullmq';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CityGuard } from './public/public-cities/guards/city.guard';
@@ -38,6 +39,15 @@ import { PublicServicesModule } from './public/public-services/public-services.m
 
 @Module({
   imports: [
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || 'redis',
+        port: Number(process.env.REDIS_PORT || 6379),
+        ...(process.env.REDIS_PASSWORD
+          ? { password: process.env.REDIS_PASSWORD }
+          : {}),
+      },
+    }),
     PrismaModule,
     S3Module,
     MailModule,

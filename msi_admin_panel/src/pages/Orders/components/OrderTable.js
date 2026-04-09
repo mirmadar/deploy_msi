@@ -83,6 +83,9 @@ export const OrderTable = ({
               <Chip label="Компании" size="small" color={order.companyEmailSent ? "success" : "default"} />
               <Chip label="Bitrix" size="small" color={order.bitrixSent ? "success" : "default"} />
             </Box>
+            <Typography sx={styles.mobileContactText}>
+              ID лида Bitrix: {order.bitrixLeadId || "—"}
+            </Typography>
 
             <Box sx={styles.mobileActions}>
               <Link component="button" variant="body2" onClick={() => onResendClientEmail(order.orderNumber)}>

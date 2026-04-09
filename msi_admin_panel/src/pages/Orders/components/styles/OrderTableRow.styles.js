@@ -19,6 +19,10 @@ export const styles = {
     textAlign: "center",
     padding: "12px 16px",
   },
+  bitrixLeadCell: {
+    textAlign: "center",
+    padding: "12px 16px",
+  },
   dateCell: {
     textAlign: "center",
     padding: "12px 16px",
@@ -51,6 +55,11 @@ export const styles = {
   },
   phoneText: {
     fontWeight: 400,
+    fontSize: "0.875rem",
+    color: "text.primary",
+  },
+  bitrixLeadText: {
+    fontWeight: 500,
     fontSize: "0.875rem",
     color: "text.primary",
   },

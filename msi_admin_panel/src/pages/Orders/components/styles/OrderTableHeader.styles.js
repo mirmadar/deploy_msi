@@ -19,6 +19,10 @@ export const styles = {
     textAlign: "center",
     padding: "12px 16px",
   },
+  bitrixLeadHeaderCell: {
+    textAlign: "center",
+    padding: "12px 16px",
+  },
   dateHeaderCell: {
     textAlign: "center",
     padding: "12px 16px",

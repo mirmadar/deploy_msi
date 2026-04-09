@@ -186,6 +186,7 @@ model Order {
   companyEmailSent   Boolean     @default(false)
   clientEmailSent    Boolean     @default(false)
   bitrixSent         Boolean     @default(false)
+  bitrixLeadId       Int?
   companyEmailSentAt DateTime?
   clientEmailSentAt  DateTime?
   bitrixSentAt       DateTime?

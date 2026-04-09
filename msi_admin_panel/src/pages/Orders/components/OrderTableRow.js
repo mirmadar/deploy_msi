@@ -6,6 +6,7 @@ import {
   Typography,
   Chip,
   Link,
+  Tooltip,
 } from "@mui/material";
 import { styles } from "./styles/OrderTableRow.styles";
 
@@ -90,21 +91,27 @@ export const OrderTableRow = ({
               sx={styles.statusChip}
             />
           )}
-          {order.bitrixSent ? (
+          <Tooltip
+            title={
+              order.bitrixLeadId
+                ? `ID лида: ${order.bitrixLeadId}`
+                : "ID лида пока отсутствует"
+            }
+          >
             <Chip
               label="Bitrix"
               size="small"
-              color="success"
+              color={order.bitrixSent ? "success" : "default"}
               sx={styles.statusChip}
             />
-          ) : (
-            <Chip
-              label="Bitrix"
-              size="small"
-              color="default"
-              sx={styles.statusChip}
-            />
-          )}
+          </Tooltip>
+        </Box>
+      </TableCell>
+      <TableCell sx={{ ...styles.bitrixLeadCell, display: { xs: "none", lg: "table-cell" } }}>
+        <Box sx={styles.cellContent}>
+          <Typography variant="body2" sx={styles.bitrixLeadText}>
+            {order.bitrixLeadId || "—"}
+          </Typography>
         </Box>
       </TableCell>
       <TableCell sx={{ ...styles.dateCell, display: { xs: "none", lg: "table-cell" } }}>
