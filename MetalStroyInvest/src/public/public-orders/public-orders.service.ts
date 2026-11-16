@@ -214,7 +214,10 @@ export class OrdersService {
 
       await this.ordersQueue.add(
         this.bitrixJobName,
-        { orderNumber },
+        {
+          orderNumber,
+          attachedFileName: file?.originalname,
+        },
         {
           ...defaultJobOptions,
           jobId: `bitrix-${orderNumber}`,
@@ -227,7 +230,7 @@ export class OrdersService {
       );
       await Promise.allSettled([
         this.sendOrderEmails(orderNumber, file),
-        this.sendBitrixLead(orderNumber),
+        this.sendBitrixLead(orderNumber, file?.originalname),
       ]);
     }
   }
@@ -241,6 +244,9 @@ export class OrdersService {
         clientName: true,
         clientPhone: true,
         clientEmail: true,
+        clientEmailSent: true,
+        companyEmailSent: true,
+        bitrixSent: true,
         createdAt: true,
         items: {
           select: {
@@ -610,22 +616,25 @@ export class OrdersService {
     return rawPhone.trim().startsWith('+') ? rawPhone.trim() : `+${digits}`;
   }
 
-  private buildBitrixComments(order: {
-    orderNumber: string;
-    items: Array<{
-      productName: string;
-      quantity: number;
-      unit: ProductUnit;
-      product: {
-        characteristics: Array<{
-          value: string;
-          characteristicName: {
-            name: string;
-          };
-        }>;
-      };
-    }>;
-  }): string {
+  private buildBitrixComments(
+    order: {
+      orderNumber: string;
+      items: Array<{
+        productName: string;
+        quantity: number;
+        unit: ProductUnit;
+        product: {
+          characteristics: Array<{
+            value: string;
+            characteristicName: {
+              name: string;
+            };
+          }>;
+        };
+      }>;
+    },
+    attachedFileName?: string,
+  ): string {
     const lines = order.items.map((item, index) => {
       const characteristicsText =
         item.product.characteristics.length > 0
@@ -643,7 +652,10 @@ export class OrdersService {
       'Состав заказа:',
       ...lines,
       '',
-      `Ссылка на файл заказа: ${this.getDownloadUrl(order.orderNumber)}`,
+      `Ссылка на PDF заказа: ${this.getDownloadUrl(order.orderNumber)}`,
+      attachedFileName
+        ? `К заказу приложен файл клиента (отправлен на почту): ${attachedFileName}`
+        : 'Файл клиента не приложен',
     ].join('\n');
   }
 
@@ -713,7 +725,10 @@ export class OrdersService {
     `;
   }
 
-  async sendBitrixLead(orderNumber: string): Promise<void> {
+  async sendBitrixLead(
+    orderNumber: string,
+    attachedFileName?: string,
+  ): Promise<void> {
     const order = await this.getOrderByNumber(orderNumber);
     const existingLeadId = await this.findExistingBitrixLeadId(orderNumber);
 
@@ -731,7 +746,7 @@ export class OrdersService {
       NAME: order.clientName,
       PHONE: [{ VALUE: normalizedPhone, VALUE_TYPE: 'WORK' }],
       EMAIL: [{ VALUE: order.clientEmail, VALUE_TYPE: 'WORK' }],
-      COMMENTS: this.buildBitrixComments(order),
+      COMMENTS: this.buildBitrixComments(order, attachedFileName),
       [fieldCode]: order.orderNumber,
     };
 
@@ -769,8 +784,19 @@ export class OrdersService {
     await this.markBitrixSent(orderNumber, payload.result);
   }
 
-  async sendClientEmail(orderNumber: string): Promise<void> {
+  async sendClientEmail(
+    orderNumber: string,
+    options?: { force?: boolean },
+  ): Promise<void> {
     const order = await this.getOrderByNumber(orderNumber);
+
+    if (!options?.force && order.clientEmailSent) {
+      this.logger.log(
+        `Email клиенту для заказа ${orderNumber} уже отправлен — пропускаем повтор.`,
+      );
+      return;
+    }
+
     const downloadUrl = this.getDownloadUrl(orderNumber);
 
     let pdfBuffer: Buffer | null = null;
@@ -845,8 +871,17 @@ export class OrdersService {
   async sendCompanyEmail(
     orderNumber: string,
     file?: Express.Multer.File,
+    options?: { force?: boolean },
   ): Promise<void> {
     const order = await this.getOrderByNumber(orderNumber);
+
+    if (!options?.force && order.companyEmailSent) {
+      this.logger.log(
+        `Email компании для заказа ${orderNumber} уже отправлен — пропускаем повтор.`,
+      );
+      return;
+    }
+
     const companyEmail = process.env.COMPANY_EMAIL || process.env.SMTP_USER;
     const downloadUrl = this.getDownloadUrl(orderNumber);
 
@@ -958,20 +993,35 @@ export class OrdersService {
     file?: Express.Multer.File,
   ): Promise<void> {
     if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-      this.logger.error(
+      throw new Error(
         `Нельзя отправить email для заказа ${orderNumber}: SMTP настройки не найдены.`,
       );
-      return;
     }
 
-    try {
-      await Promise.allSettled([
-        this.sendClientEmail(orderNumber),
-        this.sendCompanyEmail(orderNumber, file),
-      ]);
-    } catch (error) {
-      this.logger.error(`Ошибка отправки email для заказа ${orderNumber}: ${error.message}`, error.stack);
-      throw error;
+    const results = await Promise.allSettled([
+      this.sendClientEmail(orderNumber),
+      this.sendCompanyEmail(orderNumber, file),
+    ]);
+
+    const failures = results.filter(
+      (result): result is PromiseRejectedResult => result.status === 'rejected',
+    );
+
+    if (failures.length > 0) {
+      const messages = failures
+        .map((failure) =>
+          failure.reason instanceof Error
+            ? failure.reason.message
+            : String(failure.reason),
+        )
+        .join('; ');
+
+      this.logger.error(
+        `Ошибка отправки email для заказа ${orderNumber}: ${messages}`,
+      );
+      throw new Error(
+        `Не удалось отправить email для заказа ${orderNumber}: ${messages}`,
+      );
     }
   }
 }

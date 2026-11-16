@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { useCitySlug } from '@/components/cities/CityProvider';
+import ConsentCheckbox from '@/components/ConsentCheckbox';
 
 function renderBlock(block: ServiceBlock) {
   const type = (block.type || '').toUpperCase();
@@ -159,6 +160,7 @@ export default function ServiceDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [orderName, setOrderName] = useState('');
   const [orderPhone, setOrderPhone] = useState('');
+  const [orderConsent, setOrderConsent] = useState(false);
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
@@ -191,6 +193,10 @@ export default function ServiceDetailPage() {
       setOrderError('Укажите имя и телефон');
       return;
     }
+    if (!orderConsent) {
+      setOrderError('Подтвердите согласие на обработку персональных данных');
+      return;
+    }
     try {
       setOrderSubmitting(true);
       await apiClient.createServiceOrder(citySlug, slug, {
@@ -200,6 +206,7 @@ export default function ServiceDetailPage() {
       setOrderSuccess(true);
       setOrderName('');
       setOrderPhone('');
+      setOrderConsent(false);
     } catch (err) {
       setOrderError(getErrorMessage(err, 'Не удалось отправить заявку'));
     } finally {
@@ -436,9 +443,14 @@ export default function ServiceDetailPage() {
                   {orderError && (
                     <p style={{ fontSize: '13px', color: '#dc2626', margin: 0 }}>{orderError}</p>
                   )}
+                  <ConsentCheckbox
+                    checked={orderConsent}
+                    onChange={setOrderConsent}
+                    disabled={orderSubmitting}
+                  />
                   <button
                     type="submit"
-                    disabled={orderSubmitting}
+                    disabled={orderSubmitting || !orderConsent}
                     style={{
                       padding: '12px 20px',
                       borderRadius: '10px',
@@ -447,8 +459,8 @@ export default function ServiceDetailPage() {
                       border: 'none',
                       fontSize: '15px',
                       fontWeight: 600,
-                      cursor: orderSubmitting ? 'not-allowed' : 'pointer',
-                      opacity: orderSubmitting ? 0.7 : 1,
+                      cursor: orderSubmitting || !orderConsent ? 'not-allowed' : 'pointer',
+                      opacity: orderSubmitting || !orderConsent ? 0.6 : 1,
                     }}
                   >
                     {orderSubmitting ? 'Отправка...' : 'Оставить заявку'}

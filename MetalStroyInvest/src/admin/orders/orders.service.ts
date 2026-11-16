@@ -178,11 +178,13 @@ export class AdminOrdersService {
   }
 
   async resendClientEmail(orderNumber: string): Promise<void> {
-    await this.publicOrdersService.sendClientEmail(orderNumber);
+    await this.publicOrdersService.sendClientEmail(orderNumber, { force: true });
   }
 
   async resendCompanyEmail(orderNumber: string): Promise<void> {
-    await this.publicOrdersService.sendCompanyEmail(orderNumber);
+    await this.publicOrdersService.sendCompanyEmail(orderNumber, undefined, {
+      force: true,
+    });
   }
 
   async resendBitrix(orderNumber: string): Promise<void> {

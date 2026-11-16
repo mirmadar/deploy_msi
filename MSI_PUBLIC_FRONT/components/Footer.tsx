@@ -1,11 +1,7 @@
-'use client';
-
-import { ROUTES, CONSENT_PERSONAL_DATA_PDF_URL } from '@/lib/constants';
+import { LEGAL_DOCUMENTS } from '@/lib/constants';
 import Image from 'next/image';
-import { useCitySlug } from './cities/CityProvider';
 
 export default function Footer() {
-  const citySlug = useCitySlug();
 
   return (
     <footer className="w-full bg-white bg-[url('/backgrounds/footer-background.png')] bg-center bg-cover rounded-t-3xl overflow-hidden p-8 md:p-14">
@@ -52,16 +48,18 @@ export default function Footer() {
         {/* Legal and Disclaimer */}
         <div className="border-t border-white/20 pt-6 mt-6">
           {/* Links */}
-          <div className="flex flex-col md:flex-row gap-2 md:gap-6 mb-5">
-            <a href={ROUTES.PRIVACY(citySlug)} className="text-white/90 underline decoration-white/50">
-              Пользовательское соглашение
-            </a>
-            <a href={CONSENT_PERSONAL_DATA_PDF_URL} target="_blank" rel="noopener noreferrer" className="text-white/90 underline decoration-white/50">
-              Согласие на обработку персональных данных
-            </a>
-            <a href={ROUTES.PRIVACY(citySlug)} className="text-white/90 underline decoration-white/50">
-              Политика конфиденциальности
-            </a>
+          <div className="flex flex-col md:flex-row flex-wrap gap-2 md:gap-6 mb-5">
+            {LEGAL_DOCUMENTS.map((document) => (
+              <a
+                key={document.href}
+                href={document.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/90 underline decoration-white/50"
+              >
+                {document.label}
+              </a>
+            ))}
           </div>
 
           {/* Disclaimer */}

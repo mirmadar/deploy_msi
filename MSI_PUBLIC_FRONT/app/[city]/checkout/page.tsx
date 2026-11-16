@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useCitySlug } from '@/components/cities/CityProvider';
+import ConsentCheckbox from '@/components/ConsentCheckbox';
 
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);
@@ -34,6 +35,7 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [document, setDocument] = useState<File | null>(null);
+  const [consent, setConsent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderSuccess, setOrderSuccess] = useState(false);
@@ -111,6 +113,10 @@ export default function CheckoutPage() {
     }
     if (!email.trim()) {
       setError('Email обязателен для заполнения');
+      return;
+    }
+    if (!consent) {
+      setError('Подтвердите согласие на обработку персональных данных');
       return;
     }
     if (!cart || !isCartExists(cart) || cart.items.length === 0) {
@@ -664,30 +670,38 @@ export default function CheckoutPage() {
 
               {cartExists && (
                 <>
+                  <div style={{ marginTop: '16px' }}>
+                    <ConsentCheckbox
+                      checked={consent}
+                      onChange={setConsent}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
                   <button
                     onClick={handleSubmit}
-                    disabled={isSubmitting || !hasItems}
+                    disabled={isSubmitting || !hasItems || !consent}
                     style={{
                       width: '100%',
                       marginTop: '16px',
                       padding: '16px',
                       borderRadius: '8px',
                       border: 'none',
-                      backgroundColor: isSubmitting || !hasItems ? '#cbd5e1' : 'var(--color-blue)',
+                      backgroundColor: isSubmitting || !hasItems || !consent ? '#cbd5e1' : 'var(--color-blue)',
                       color: '#ffffff',
                       fontSize: '16px',
                       fontWeight: '600',
-                      cursor: isSubmitting || !hasItems ? 'not-allowed' : 'pointer',
+                      cursor: isSubmitting || !hasItems || !consent ? 'not-allowed' : 'pointer',
                       transition: 'background-color 0.2s',
                     }}
                     onMouseEnter={(e) => {
-                      if (!isSubmitting && hasItems) {
+                      if (!isSubmitting && hasItems && consent) {
                         e.currentTarget.style.backgroundColor = 'var(--color-light-blue)';
                         e.currentTarget.style.color = 'var(--color-blue)';
                       }
                     }}
                     onMouseLeave={(e) => {
-                      if (!isSubmitting && hasItems) {
+                      if (!isSubmitting && hasItems && consent) {
                         e.currentTarget.style.backgroundColor = 'var(--color-blue)';
                         e.currentTarget.style.color = 'var(--color-white)';
                       }

@@ -18,6 +18,7 @@ type MailJobPayload = {
 
 type BitrixJobPayload = {
   orderNumber: string;
+  attachedFileName?: string;
 };
 
 @Processor('orders-processing')
@@ -40,7 +41,10 @@ export class PublicOrdersProcessor extends WorkerHost {
 
     if (job.name === 'send-bitrix-lead') {
       const payload = job.data as BitrixJobPayload;
-      await this.ordersService.sendBitrixLead(payload.orderNumber);
+      await this.ordersService.sendBitrixLead(
+        payload.orderNumber,
+        payload.attachedFileName,
+      );
       return;
     }
 

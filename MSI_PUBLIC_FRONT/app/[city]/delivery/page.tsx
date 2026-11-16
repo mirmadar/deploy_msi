@@ -3,12 +3,14 @@
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiClient, getErrorMessage } from '@/lib/api';
 import { useCitySlug } from '@/components/cities/CityProvider';
+import ConsentCheckbox from '@/components/ConsentCheckbox';
 import { FormEvent, useState } from 'react';
 export default function DeliveryPage() {
     const citySlug = useCitySlug();
 
     const [orderName, setOrderName] = useState('');
     const [orderPhone, setOrderPhone] = useState('');
+    const [orderConsent, setOrderConsent] = useState(false);
     const [orderSubmitting, setOrderSubmitting] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [orderError, setOrderError] = useState<string | null>(null);
@@ -20,12 +22,17 @@ export default function DeliveryPage() {
         setOrderError('Укажите имя и телефон');
         return;
       }
+      if (!orderConsent) {
+        setOrderError('Подтвердите согласие на обработку персональных данных');
+        return;
+      }
       try {
         setOrderSubmitting(true);
         await apiClient.sendCallbackRequest(orderName.trim(), orderPhone.trim());
         setOrderSuccess(true);
         setOrderName('');
         setOrderPhone('');
+        setOrderConsent(false);
       } catch (err) {
         setOrderError(getErrorMessage(err, 'Не удалось отправить заявку'));
       } finally {
@@ -160,9 +167,14 @@ export default function DeliveryPage() {
                   {orderError && (
                     <p style={{ fontSize: '13px', color: '#dc2626', margin: 0 }}>{orderError}</p>
                   )}
+                  <ConsentCheckbox
+                    checked={orderConsent}
+                    onChange={setOrderConsent}
+                    disabled={orderSubmitting}
+                  />
                   <button
                     type="submit"
-                    disabled={orderSubmitting}
+                    disabled={orderSubmitting || !orderConsent}
                     style={{
                       padding: '12px 20px',
                       borderRadius: '10px',
@@ -171,8 +183,8 @@ export default function DeliveryPage() {
                       border: 'none',
                       fontSize: '15px',
                       fontWeight: 600,
-                      cursor: orderSubmitting ? 'not-allowed' : 'pointer',
-                      opacity: orderSubmitting ? 0.7 : 1,
+                      cursor: orderSubmitting || !orderConsent ? 'not-allowed' : 'pointer',
+                      opacity: orderSubmitting || !orderConsent ? 0.6 : 1,
                     }}
                   >
                     {orderSubmitting ? 'Отправка...' : 'Оставить заявку'}

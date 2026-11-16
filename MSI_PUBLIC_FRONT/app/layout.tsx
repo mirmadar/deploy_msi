@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import localFont from 'next/font/local';
 import Footer from '@/components/Footer';
+import CookieConsent from '@/components/CookieConsent';
 import CityProvider from '@/components/cities/CityProvider';
 
 import '@/styles/globals.css';
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <CityProvider>
           <main>{children}</main>
           <Footer />
+          <CookieConsent />
         </CityProvider>
       </body>
     </html>

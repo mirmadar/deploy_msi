@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, FormEvent, ChangeEvent, use } from 'react';
+import { useState, FormEvent, ChangeEvent } from 'react';
 import { ActionButton } from './ui/ActionButton';
-import { ROUTES, CONSENT_PERSONAL_DATA_PDF_URL } from '@/lib/constants';
 import { getErrorMessage } from '@/lib/api';
-import { useCitySlug } from './cities/CityProvider';
+import ConsentCheckbox from './ConsentCheckbox';
 
 interface RequestFormProps {
   onSubmit: (data: { name: string; phone: string; document?: File }) => Promise<void>;
@@ -16,9 +15,9 @@ export default function RequestForm({ onSubmit, buttonColor = 'var(--color-green
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [document, setDocument] = useState<File | null>(null);
+  const [consent, setConsent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const citySlug = useCitySlug();
 
   const truncate = (text: string, max = 24) =>
   text.length > max ? text.slice(0, max) + '…' : text;
@@ -51,6 +50,11 @@ export default function RequestForm({ onSubmit, buttonColor = 'var(--color-green
       return;
     }
 
+    if (!consent) {
+      setError('Подтвердите согласие на обработку персональных данных');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await onSubmit({
@@ -62,6 +66,7 @@ export default function RequestForm({ onSubmit, buttonColor = 'var(--color-green
       setName('');
       setPhone('');
       setDocument(null);
+      setConsent(false);
       if (typeof window !== 'undefined') {
         const fileInput = window.document.querySelector('input[type="file"]') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
@@ -177,31 +182,20 @@ export default function RequestForm({ onSubmit, buttonColor = 'var(--color-green
         </label>
       </div>
 
-      {/* Consent text */}
-      <p
-        style={{
-          color: 'rgba(255, 255, 255, 0.9)',
-          fontSize: '12px',
-          marginBottom: '16px',
-        }}
-      >
-        Нажимая на кнопку «Заказать звонок», Вы даете <a
-          href={CONSENT_PERSONAL_DATA_PDF_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="small"
-        >Согласие на обработку данных</a> и соглашаетесь с <a
-          href={ROUTES.PRIVACY(citySlug)}
-          className="small"
-        >Политикой конфиденциальности
-        </a>
-      </p>
+      <div style={{ marginBottom: '16px' }}>
+        <ConsentCheckbox
+          checked={consent}
+          onChange={setConsent}
+          disabled={isSubmitting}
+          tone="light"
+        />
+      </div>
 
       {/* Submit button */}
       <ActionButton 
         text= {isSubmitting ? 'Отправка...' : 'Заказать звонок'}
         type="submit" 
-        disabled={isSubmitting}
+        disabled={isSubmitting || !consent}
         background={buttonColor}
         color={buttonText}
       />
